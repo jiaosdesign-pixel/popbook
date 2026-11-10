@@ -46,6 +46,17 @@ The four examples are the standard. Measure against the nearest one before you h
    ```
    Add one line only for something they must know (a guessed date, a thin photo, a new kit piece).
 
+## The team
+
+If your agent can hand work to helpers (sub-agents), a page that needs a new kit piece goes faster split four ways. A kit-only page is faster done alone: the hand-offs cost more than they save. The Scout and the Editor need only the sender's words and photo, so run them at the same time; the Builder waits for the Scout, the Reviewer for the Builder.
+
+- **Scout:** steps 1 and 2. Gets the photo and the line. Hands back the scene brief, the scene palette as a JSON fragment, and the one question for the sender if there is one.
+- **Builder:** steps 3 to 5, plus the new piece if the brief needs one. Gets the brief, the palette and the photo. Runs build and check and fixes what they show. Hands back the moment file, the `check.mjs` output and the shots folder.
+- **Reviewer:** builds nothing. Gets the shots, the photo or the line, and the nearest example's shots. Looks night first, phone first: the bar (a tap, a drag and the living loop), fold-flat, nothing clipped at the page edge or hidden behind another layer, and every piece is in the photo or the line. Hands back "ready" or a numbered list of fixes, each naming the piece. The Builder fixes and rebuilds, and the Reviewer looks again. After three rounds, hand over with what is still open.
+- **Editor:** step 6. Gets the line, the place and the date, never the shots. Hands back the two caption options.
+
+You do step 7 yourself. Put a review point in the note only if it stayed open.
+
 ## A new piece
 
 When the photo's hero is something the kit cannot make (a lighthouse, a carousel), add one piece in `book/kit/` following the nearest existing one: paper materials from `book/engine/paper.js`, taps and drags the way `shop-front` (`book/kit/cafe.js`) and `layer-rider` (`book/kit/panorama2.js`) do, idle loops in `tick(t, dt, loops)` that run only while `loops` is true. Register it in `book/kit/index.js` with `build`, `about` and, for side binding, `panorama: true` and `declare`. The engine writes each part's matrix every frame, so anything you place or animate sits in a group inside the part, never on the part's root. Light, dark, reduced motion and touch come from the engine; do not special-case them. Expect an hour or more; a kit-only page takes minutes.
