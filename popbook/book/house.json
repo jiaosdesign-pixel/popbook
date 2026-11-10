@@ -1,0 +1,42 @@
+{
+ "palette": {
+  "cover": "#D2C4A2",
+  "core": "#F4F1E8",
+  "stripes": [
+   "#375975",
+   "#DCC380",
+   "#365D45",
+   "#A44732",
+   "#B0BDC8",
+   "#EDEBE0"
+  ],
+  "lamp": "#FFD08A"
+ },
+ "book": {
+  "binding": "side",
+  "width": 1.5,
+  "depth": 1.05,
+  "nearPages": 4,
+  "farPages": 4,
+  "restAngle": 180,
+  "vTheta": 105,
+  "vGamma": 90
+ },
+ "light": {
+  "pool": 0.3,
+  "poolAt": [
+   -0.12,
+   0.34,
+   0
+  ],
+  "shadowRadius": 24,
+  "shadowIntensity": 0.42
+ },
+ "camera": {
+  "yaw": 90,
+  "elevation": 22,
+  "fov": 30,
+  "frame": 0.8,
+  "lightYaw": -14
+ }
+}

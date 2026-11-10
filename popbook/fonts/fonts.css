@@ -1,0 +1,5 @@
+/* the faces popbook pages use, Latin subset. Alegreya Sans (Huerta Tipográfica) and Martian Mono (Evil Martians), both SIL OFL 1.1: see OFL-*.txt. */
+@font-face { font-family: "Alegreya Sans"; src: url("alegreya-sans-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Alegreya Sans"; src: url("alegreya-sans-400i.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "Alegreya Sans"; src: url("alegreya-sans-500.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Martian Mono"; src: url("martian-mono-var.woff2") format("woff2"); font-weight: 100 800; font-stretch: 75% 112.5%; font-display: swap; }

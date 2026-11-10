@@ -1,0 +1,320 @@
+{
+ "id": "peets",
+ "place": "Peet's Coffee, Mountain View",
+ "date": "2026-11-04",
+ "view": "side-bound V-fold panorama of a café front at first light: soft hills and a tree line behind, the stone pier, sign band and lit glass of the shop with the figure in the glass double door, a patio in front (umbrella, table, two chairs; a young tree in a planter), a planted bed, the sidewalk, kerb and lot at the reader's edge (proposed)",
+ "caption": "Needed more coffee to start the day.",
+ "stamp": "Peet's Coffee, Mountain View · Nov 4 2026",
+ "palette": {
+  "cover": "#D2C4A2",
+  "core": "#F4F1E8",
+  "stripes": [
+   "#375975",
+   "#DCC380",
+   "#365D45",
+   "#A44732",
+   "#B0BDC8",
+   "#EDEBE0"
+  ],
+  "ocean": "#7D8AA6",
+  "bay": "#A9B3C4",
+  "foam": "#EEF1F2",
+  "wall": "#D7C6A8",
+  "wallLine": "rgba(90,66,44,0.16)",
+  "signBand": "#CBB693",
+  "brick": "#A4684C",
+  "frame": "#2F2A25",
+  "glass": "#4A443D",
+  "interior": "#E8B878",
+  "sign": "#F6EEDC",
+  "roof": "#6E4E3E",
+  "handle": "#C9B48C",
+  "walk": "#DDD4C3",
+  "walkLine": "rgba(96,74,52,0.22)",
+  "asphalt": "#5E5A53",
+  "kerb": "#D3CBBB",
+  "hedge": "#62804F",
+  "trees": "#4F6A45",
+  "treeLight": "#77915C",
+  "treeDark": "#3F5838",
+  "trunk": "#6E5A44",
+  "umbrella": "#332D29",
+  "pole": "#DCD6C8",
+  "wood": "#A37D56",
+  "woodDark": "#735A40",
+  "cup": "#C0905F",
+  "cupSleeve": "#6E4B3A",
+  "cupLid": "#F6F2E8",
+  "lamp": "#FFD08A",
+  "bridge": "#A44732",
+  "sun": "#E3C98E",
+  "moon": "#F2EEDF",
+  "moonShadow": "#5D6779",
+  "grassDark": "#6E8460",
+  "grassLight": "#A7B48C",
+  "figure": {
+   "coat": "#F1EEE4",
+   "coatBack": "#DAD5C8",
+   "scarf": "#A44732",
+   "legs": "#2E4157",
+   "legsBack": "#24364A",
+   "shoes": "#1A1A1A",
+   "skin": "#E2C3A7",
+   "hair": "#1E1A17",
+   "cheek": "#E0A890"
+  },
+  "bed": "#B3AC86",
+  "shrub": "#62804F",
+  "shrubDark": "#3F5838",
+  "shrubLight": "#A7B48C",
+  "planter": "#CFC6B4",
+  "planterRim": "#E4DDCF"
+ },
+ "book": {
+  "binding": "side",
+  "width": 1.5,
+  "depth": 1.05,
+  "nearPages": 4,
+  "farPages": 4,
+  "restAngle": 180,
+  "vTheta": 105,
+  "vGamma": 90
+ },
+ "ground": {
+  "preset": "cafe-side",
+  "kerb": -0.66,
+  "wall": 0.04
+ },
+ "camera": {
+  "yaw": 90,
+  "elevation": 22,
+  "fov": 30,
+  "frame": 0.8,
+  "lightYaw": -14
+ },
+ "light": {
+  "pool": 0.3,
+  "poolAt": [
+   -0.12,
+   0.34,
+   0
+  ],
+  "shadowRadius": 24,
+  "shadowIntensity": 0.42
+ },
+ "pieces": [
+  {
+   "id": "hills",
+   "kit": "vfold-layer",
+   "x0": 0.48,
+   "reach": [
+    0.96,
+    0.96
+   ],
+   "bands": [
+    {
+     "kind": "hills",
+     "from": -0.96,
+     "to": 0.96,
+     "h": 0.09,
+     "color": "#D2C3AA",
+     "seed": 3,
+     "z": -0.0042,
+     "peaks": [
+      [
+       -0.97,
+       0.1,
+       0.12
+      ],
+      [
+       -0.5,
+       0.24,
+       0.3
+      ],
+      [
+       0.1,
+       0.21,
+       0.3
+      ],
+      [
+       0.55,
+       0.25,
+       0.32
+      ],
+      [
+       0.88,
+       0.2,
+       0.2
+      ]
+     ]
+    },
+    {
+     "kind": "hills",
+     "from": -0.96,
+     "to": 0.96,
+     "h": 0.07,
+     "color": "#9DAD8C",
+     "colorB": "#CDB98C",
+     "seed": 6,
+     "z": 0,
+     "peaks": [
+      [
+       -0.55,
+       0.16,
+       0.22
+      ],
+      [
+       -0.15,
+       0.15,
+       0.3
+      ],
+      [
+       0.32,
+       0.17,
+       0.28
+      ],
+      [
+       0.8,
+       0.16,
+       0.22
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sky",
+   "label": "Sun and moon",
+   "kit": "sky-dial",
+   "role": "sky",
+   "on": "hills",
+   "x0": 0.48,
+   "center": [
+    -0.8,
+    0.13
+   ],
+   "r": 0.12,
+   "day": "#E7D8C2"
+  },
+  {
+   "id": "trees",
+   "kit": "vfold-wrap",
+   "inner": {
+    "kit": "estate",
+    "page": "far",
+    "width": 0.9,
+    "facadeH": 0.2,
+    "layers": [
+     {
+      "kind": "trees",
+      "u": 0.36,
+      "h": 0.19,
+      "x0": -0.95,
+      "x1": 0.95,
+      "color": "#5F7A62",
+      "seed": 5,
+      "spires": 0.1,
+      "dip": [
+       -0.8,
+       0.13,
+       0.35
+      ]
+     }
+    ]
+   },
+   "fold": [
+    {
+     "x0": 0.36,
+     "reach": [
+      0.96,
+      0.96
+     ],
+     "height": [
+      0.23,
+      0.23
+     ]
+    }
+   ]
+  },
+  {
+   "id": "cafe",
+   "label": "Café door",
+   "kit": "shop-front",
+   "role": "hero",
+   "x0": 0.04,
+   "reach": [
+    0.64,
+    0.7
+   ],
+   "h": 0.38,
+   "tab": {
+    "page": "near",
+    "u": 0.5
+   }
+  },
+  {
+   "id": "patio",
+   "label": "Umbrella",
+   "kit": "cafe-patio",
+   "x0": -0.26,
+   "umbrella": -0.46,
+   "tree": 0.46,
+   "treeH": 0.29
+  },
+  {
+   "id": "bed",
+   "kit": "vfold-wrap",
+   "inner": {
+    "kit": "shrub-bank",
+    "layers": [
+     {
+      "page": "near",
+      "u": 0.44,
+      "h": 0.055,
+      "x0": -0.84,
+      "x1": 0.84,
+      "seed": 4,
+      "color": "#62804F",
+      "tip": "#A7B48C",
+      "taperL": 0.1,
+      "taperR": 0.1
+     }
+    ]
+   },
+   "fold": [
+    {
+     "x0": -0.44,
+     "reach": [
+      0.85,
+      0.85
+     ],
+     "height": [
+      0.09,
+      0.09
+     ]
+    }
+   ]
+  }
+ ],
+ "idle": [
+  "sign-steam",
+  "cup-lift",
+  "tree-sway",
+  "windows-glow"
+ ],
+ "cover": {
+  "glimpse": {
+   "from": [
+    -2.4,
+    0.42,
+    0.1
+   ],
+   "at": [
+    0,
+    0.16,
+    0.08
+   ],
+   "fov": 24
+  }
+ }
+}

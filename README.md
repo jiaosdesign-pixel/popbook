@@ -1,0 +1,47 @@
+# popbook
+
+Send a photo or a line. Get a pop-up book page.
+
+popbook is a skill for AI agents. You send your agent a photo from your day (or one line about it), and it builds a page of a paper pop-up book you can play with: layers of cut paper stand up from the gutter, a pull-tab slides, a door swings open, a sun-and-moon dial turns day into night, and something in the scene keeps moving on its own. You get one HTML file. Open it, send it, host it anywhere. No server, no install, no network.
+
+I built it for my own site, where the book holds one moment from my week. This is the same engine, packaged for you.
+
+![A page of popbook, by day and by night](docs/card.png)
+
+## Install
+
+popbook is an [Agent Skill](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview): a folder with a `SKILL.md`.
+
+- **Claude Code:** copy the `popbook/` folder to `~/.claude/skills/popbook/`.
+- **Claude app:** zip the `popbook/` folder and add it under Settings, Capabilities, Skills.
+- **Other agents:** point yours at `popbook/SKILL.md`.
+
+You need Node 18 or newer. Python 3 with Pillow reads photos and makes the preview card. Playwright, if you have it, lets the agent check its own work in a headless browser.
+
+## Use
+
+Send a photo and a line:
+
+> Morning swim before work. Steam coming off the pool. Nov 6.
+
+Your agent reads the photo, picks pieces from the kit, folds them into a spread, checks it by day and by night, and hands you `book.html` with two caption options. Send another photo next week and it becomes the next page.
+
+## What's inside
+
+| Path | What |
+|---|---|
+| `popbook/SKILL.md` | the instructions your agent follows |
+| `popbook/references/kit.md` | every paper piece, its parameters, and the fold-flat rules |
+| `popbook/examples/` | four pages from my book, as worked examples |
+| `popbook/scripts/` | `new.mjs` starts a page, `build.mjs` makes the one HTML file, `check.mjs` tests it in a headless browser, `photo.py` reads a photo's date and colours |
+| `popbook/book/` | the pop-up engine (three.js) |
+| `popbook/vendor/`, `popbook/fonts/` | three.js and the two typefaces, with their licences |
+
+## Credits
+
+Made by Jiao Shi, [jiao-design.vercel.app](https://jiao-design.vercel.app).
+Built on [three.js](https://threejs.org) (MIT). Type: Alegreya Sans by Huerta Tipográfica and Martian Mono by Evil Martians, both SIL Open Font License 1.1.
+
+## License
+
+MIT for the code and the examples. The fonts keep their own licence (`popbook/fonts/OFL-*.txt`), and three.js keeps its own (`popbook/vendor/three/LICENSE`).

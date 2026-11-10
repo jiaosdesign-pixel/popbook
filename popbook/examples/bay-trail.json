@@ -1,0 +1,675 @@
+{
+ "id": "bay-trail-2026-11-07",
+ "place": "Bay Trail, Foster City",
+ "date": "2026-11-07",
+ "view": "side-bound V-fold panorama from the trail: the bay and the hazy far shore behind, the shore, the trail and the shrubs in front",
+ "caption": "Logging some easy miles on my bike.",
+ "stamp": "Bay Trail, Foster City · Nov 7 2026",
+ "palette": {
+  "cover": "#D2C4A2",
+  "core": "#F4F1E8",
+  "stripes": [
+   "#375975",
+   "#DCC380",
+   "#365D45",
+   "#A44732",
+   "#B0BDC8",
+   "#EDEBE0"
+  ],
+  "bay": "#7F9BB1",
+  "ocean": "#4D6E89",
+  "foam": "#EEF1F2",
+  "wave": [
+   "#94ACC0",
+   "#7D98B0",
+   "#6684A0",
+   "#4F7090"
+  ],
+  "landLeft": "#DCC380",
+  "landRight": "#6A8C70",
+  "road": "#77736C",
+  "roadLine": "#EDEBE0",
+  "wetSand": "#B9AB8C",
+  "grass": "#D6BB76",
+  "grassDark": "#B09350",
+  "grassLight": "#E8D7A2",
+  "shoulder": "#D3C29A",
+  "shoulderDark": "#A8946A",
+  "asphalt": "#76726C",
+  "trailLine": "#E9DFC2",
+  "rocks": [
+   "#8E8A84",
+   "#A8A399",
+   "#77736C"
+  ],
+  "shrub": "#B39550",
+  "shrubDark": "#7A6F42",
+  "shrubLight": "#DCC583",
+  "wood": "#8A6A48",
+  "woodDark": "#5A4E44",
+  "signWhite": "#F1EEE4",
+  "signGreen": "#4F7A5C",
+  "signYellow": "#DCC380",
+  "lampPost": "#4A4540",
+  "lampGlass": "#E8E2CF",
+  "lamp": "#FFD08A",
+  "town": "#C5CCD3",
+  "shoreLight": "#FFD9A0",
+  "glass": "#2E3B48",
+  "wire": "#4A4540",
+  "gullBody": "#FAF9F5",
+  "gullWing": "#C3C9CF",
+  "gullTip": "#2E2E2E",
+  "gullBeak": "#DCC380",
+  "moon": "#F2EEDF",
+  "moonShadow": "#5D6779",
+  "moonGlow": "#CFD8FF",
+  "fog": "#DCE3EA",
+  "tuft": "#C4A55A",
+  "bike": {
+   "frame": "#A44732",
+   "tire": "#2B2A29",
+   "rim": "#B9B4AA",
+   "spoke": "#D8D2C4",
+   "hub": "#5A5550",
+   "crank": "#3A3836",
+   "guard": "#7F3626",
+   "saddle": "#3A2E28",
+   "basket": "#C9A45E",
+   "basketDark": "#9E7E40",
+   "bell": "#DCC380",
+   "helmet": "#FAF9F5",
+   "helmetStripe": "#375975"
+  },
+  "figure": {
+   "coat": "#F1EEE4",
+   "coatBack": "#DAD5C8",
+   "scarf": "#A44732",
+   "legs": "#2E4157",
+   "legsBack": "#24364A",
+   "shoes": "#1A1A1A",
+   "skin": "#E2C3A7",
+   "hair": "#1E1A17",
+   "cheek": "#E0A890"
+  },
+  "grassPatch": "#C3B26E",
+  "bridge": "#A44732",
+  "sun": "#DCC380"
+ },
+ "book": {
+  "binding": "side",
+  "width": 1.5,
+  "depth": 1.05,
+  "nearPages": 4,
+  "farPages": 4,
+  "restAngle": 180,
+  "vTheta": 105,
+  "vGamma": 90
+ },
+ "ground": {
+  "preset": "baytrail-side",
+  "shore": -0.02,
+  "trail": {
+   "x": -0.27,
+   "w": 0.13,
+   "bend": 0.04
+  }
+ },
+ "camera": {
+  "yaw": 90,
+  "elevation": 22,
+  "fov": 30,
+  "frame": 0.8,
+  "lightYaw": -14
+ },
+ "light": {
+  "pool": 0.2,
+  "poolAt": [
+   0,
+   0.3,
+   0
+  ],
+  "shadowRadius": 24,
+  "shadowIntensity": 0.42
+ },
+ "pieces": [
+  {
+   "id": "farshore",
+   "kit": "vfold-layer",
+   "role": "ground",
+   "x0": 0.46,
+   "reach": [
+    0.96,
+    0.96
+   ],
+   "bands": [
+    {
+     "kind": "hills",
+     "from": -0.96,
+     "to": 0.96,
+     "h": 0.06,
+     "color": "#A9B8C5",
+     "seed": 2,
+     "z": -0.0084,
+     "peaks": [
+      [
+       -0.78,
+       0.13,
+       0.3
+      ],
+      [
+       -0.38,
+       0.17,
+       0.35
+      ],
+      [
+       0.08,
+       0.15,
+       0.3
+      ],
+      [
+       0.5,
+       0.19,
+       0.35
+      ],
+      [
+       0.86,
+       0.14,
+       0.25
+      ]
+     ]
+    },
+    {
+     "kind": "hills",
+     "from": -0.96,
+     "to": 0.96,
+     "h": 0.045,
+     "color": "#8DA1B3",
+     "seed": 5,
+     "z": -0.0042,
+     "peaks": [
+      [
+       -0.62,
+       0.1,
+       0.28
+      ],
+      [
+       -0.15,
+       0.085,
+       0.3
+      ],
+      [
+       0.32,
+       0.11,
+       0.3
+      ],
+      [
+       0.74,
+       0.09,
+       0.25
+      ]
+     ]
+    },
+    {
+     "kind": "hills",
+     "from": -0.96,
+     "to": 0.96,
+     "h": 0.03,
+     "color": "#6F879C",
+     "seed": 8,
+     "z": 0,
+     "peaks": [
+      [
+       -0.85,
+       0.06,
+       0.2
+      ],
+      [
+       -0.42,
+       0.055,
+       0.22
+      ],
+      [
+       0.1,
+       0.05,
+       0.2
+      ],
+      [
+       0.58,
+       0.065,
+       0.24
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "town",
+   "kit": "vfold-layer",
+   "role": "ground",
+   "x0": 0.4,
+   "reach": [
+    0.9,
+    0.9
+   ],
+   "bands": [
+    {
+     "kind": "city",
+     "from": -0.9,
+     "to": 0.9,
+     "h": 0.006,
+     "color": "#B7C3CD",
+     "z": 0,
+     "blocks": [
+      [
+       -0.8,
+       0.04,
+       0.02
+      ],
+      [
+       -0.74,
+       0.03,
+       0.03
+      ],
+      [
+       -0.66,
+       0.05,
+       0.018
+      ],
+      [
+       -0.5,
+       0.04,
+       0.025
+      ],
+      [
+       -0.42,
+       0.03,
+       0.035
+      ],
+      [
+       -0.2,
+       0.05,
+       0.02
+      ],
+      [
+       0.12,
+       0.04,
+       0.03
+      ],
+      [
+       0.2,
+       0.03,
+       0.022
+      ],
+      [
+       0.34,
+       0.05,
+       0.028
+      ],
+      [
+       0.5,
+       0.04,
+       0.02
+      ],
+      [
+       0.62,
+       0.03,
+       0.032
+      ],
+      [
+       0.78,
+       0.05,
+       0.02
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sky",
+   "label": "Sun and moon",
+   "kit": "sky-dial",
+   "role": "sky",
+   "on": "farshore",
+   "x0": 0.46,
+   "center": [
+    -0.7,
+    0.12
+   ],
+   "r": 0.13
+  },
+  {
+   "id": "water",
+   "kit": "vfold-layer",
+   "role": "ground",
+   "x0": 0.26,
+   "reach": [
+    0.96,
+    0.96
+   ],
+   "bands": [
+    {
+     "kind": "waves",
+     "from": -0.96,
+     "to": 0.96,
+     "h": 0.05,
+     "amp": 0.008,
+     "len": 0.26,
+     "phase": 0.5,
+     "color": "#375975",
+     "z": 0
+    }
+   ]
+  },
+  {
+   "id": "gull",
+   "label": "Gull",
+   "kit": "coil-gull",
+   "on": "water",
+   "x0": 0.26,
+   "x": 0.45,
+   "h": 0.2,
+   "scale": 2.4
+  },
+  {
+   "id": "water2",
+   "kit": "vfold-layer",
+   "role": "ground",
+   "x0": 0.14,
+   "reach": [
+    0.96,
+    0.96
+   ],
+   "bands": [
+    {
+     "kind": "waves",
+     "from": -0.96,
+     "to": 0.96,
+     "h": 0.045,
+     "amp": 0.008,
+     "len": 0.22,
+     "phase": 2,
+     "color": "#4F7090",
+     "z": 0
+    }
+   ]
+  },
+  {
+   "id": "rocks",
+   "kit": "vfold-wrap",
+   "role": "ground",
+   "inner": {
+    "kit": "shore-rocks",
+    "layers": [
+     {
+      "page": "far",
+      "u": 0.02,
+      "h": 0.045,
+      "x0": -0.95,
+      "x1": -0.25,
+      "seed": 5
+     },
+     {
+      "page": "far",
+      "u": 0.02,
+      "h": 0.04,
+      "x0": 0.05,
+      "x1": 0.95,
+      "seed": 6
+     }
+    ]
+   },
+   "fold": [
+    {
+     "x0": 0.02,
+     "reach": [
+      0.96,
+      0.96
+     ],
+     "height": [
+      0.05,
+      0.05
+     ]
+    }
+   ]
+  },
+  {
+   "id": "edge",
+   "kit": "vfold-layer",
+   "role": "ground",
+   "x0": -0.19,
+   "reach": [
+    0.94,
+    0.94
+   ],
+   "bands": [
+    {
+     "kind": "hills",
+     "from": -0.94,
+     "to": 0.94,
+     "h": 0.014,
+     "color": "#B09350",
+     "seed": 3,
+     "peaks": [
+      [
+       -0.7,
+       0.03,
+       0.06
+      ],
+      [
+       -0.45,
+       0.026,
+       0.05
+      ],
+      [
+       -0.1,
+       0.028,
+       0.06
+      ],
+      [
+       0.25,
+       0.026,
+       0.05
+      ],
+      [
+       0.6,
+       0.03,
+       0.06
+      ]
+     ],
+     "z": -0.004
+    }
+   ]
+  },
+  {
+   "id": "me",
+   "label": "Bike",
+   "kit": "layer-rider",
+   "role": "hero",
+   "on": "edge",
+   "x0": -0.19,
+   "slot": [
+    -0.86,
+    -0.08
+   ],
+   "at": 0.25,
+   "scale": 2.1,
+   "speed": 0.045,
+   "h": 0.36,
+   "tab": {
+    "page": "far",
+    "u": 0.62,
+    "color": "#A44732",
+    "maxPull": 0.07
+   }
+  },
+  {
+   "id": "lamps",
+   "kit": "vfold-wrap",
+   "inner": [
+    {
+     "kit": "trail-lamps",
+     "layers": [
+      {
+       "page": "near",
+       "u": 0.34,
+       "x": 0.12,
+       "h": 0.2
+      },
+      {
+       "page": "near",
+       "u": 0.34,
+       "x": 0.46,
+       "h": 0.2
+      }
+     ]
+    },
+    {
+     "kit": "trail-post",
+     "page": "near",
+     "x": 0.3,
+     "layers": [
+      {
+       "u": 0.34,
+       "h": 0.17
+      }
+     ]
+    }
+   ],
+   "fold": [
+    {
+     "x0": -0.34,
+     "reach": [
+      0.13,
+      0.53
+     ],
+     "height": [
+      0.01,
+      0.28
+     ]
+    }
+   ],
+   "pools": [
+    {
+     "x": 0.12,
+     "x0": -0.34,
+     "w": 0.34,
+     "d": 0.26
+    },
+    {
+     "x": 0.46,
+     "x0": -0.34,
+     "w": 0.34,
+     "d": 0.26
+    }
+   ],
+   "poolStrength": 0.4,
+   "tie": "#D6BB76"
+  },
+  {
+   "id": "shrubs",
+   "kit": "vfold-wrap",
+   "inner": {
+    "kit": "shrub-bank",
+    "layers": [
+     {
+      "page": "near",
+      "u": 0.46,
+      "h": 0.25,
+      "x0": 0.55,
+      "x1": 0.95
+     },
+     {
+      "page": "near",
+      "u": 0.46,
+      "h": 0.24,
+      "x0": -0.95,
+      "x1": -0.57
+     },
+     {
+      "page": "near",
+      "u": 0.52,
+      "h": 0.14,
+      "x0": 0.6,
+      "x1": 0.88
+     },
+     {
+      "page": "near",
+      "u": 0.52,
+      "h": 0.12,
+      "x0": -0.88,
+      "x1": -0.62
+     }
+    ]
+   },
+   "fold": [
+    {
+     "x0": -0.46,
+     "reach": [
+      0.96,
+      0.96
+     ],
+     "height": [
+      0.33,
+      0.33
+     ]
+    },
+    {
+     "x0": -0.52,
+     "reach": [
+      0.89,
+      0.89
+     ],
+     "height": [
+      0.16,
+      0.19
+     ]
+    }
+   ]
+  },
+  {
+   "id": "verge",
+   "kit": "vfold-layer",
+   "role": "ground",
+   "x0": -0.56,
+   "reach": [
+    0.73,
+    0.73
+   ],
+   "bands": [
+    {
+     "kind": "grass",
+     "from": -0.73,
+     "to": 0.73,
+     "h": 0.045,
+     "amp": 0.03,
+     "color": "#C9A95A",
+     "colorB": "#9E8340",
+     "colorC": "#E3CC8E",
+     "seed": 4,
+     "z": 0
+    }
+   ]
+  }
+ ],
+ "idle": [
+  "rider",
+  "gull-bob",
+  "shore-lights"
+ ],
+ "cover": {
+  "glimpse": {
+   "from": [
+    -2.4,
+    0.42,
+    -0.3
+   ],
+   "at": [
+    -0.1,
+    0.13,
+    -0.3
+   ],
+   "fov": 24
+  }
+ }
+}

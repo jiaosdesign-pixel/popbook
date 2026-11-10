@@ -1,0 +1,410 @@
+{
+ "id": "golden-gate-2026-11",
+ "place": "Golden Gate Bridge, San Francisco",
+ "date": "2026-11-08",
+ "view": "side-bound V-fold panorama, looking west from the bay down the gutter: SF on the left page, Marin on the right, the Pacific and its fog beyond the Gate",
+ "palette": {
+  "cover": "#D2C4A2",
+  "core": "#F4F1E8",
+  "stripes": [
+   "#375975",
+   "#DCC380",
+   "#365D45",
+   "#A44732",
+   "#B0BDC8",
+   "#EDEBE0"
+  ],
+  "bay": "#7F9BB1",
+  "ocean": "#4D6E89",
+  "wave": [
+   "#94ACC0",
+   "#7D98B0",
+   "#6684A0",
+   "#4F7090"
+  ],
+  "foam": "#EEF1F2",
+  "landLeft": "#DCC380",
+  "landRight": "#6A8C70",
+  "road": "#77736C",
+  "roadLine": "#EDEBE0",
+  "walk": "#CFC8B8",
+  "bridge": "#A44732",
+  "bridgeDark": "#873826",
+  "cable": "#7E3424",
+  "pier": "#C2BBAC",
+  "glass": "#2E3B48",
+  "lamp": "#FFD08A",
+  "hill": "#365D45",
+  "fog": "#DCE3EA",
+  "skyline": "#8FA2B4",
+  "hull": "#FAF9F5",
+  "sail": "#FAF9F5",
+  "sail2": "#EDEBE0",
+  "mast": "#5A4E44",
+  "sun": "#DCC380",
+  "moon": "#F2EEDF",
+  "moonShadow": "#5D6779",
+  "moonGlow": "#CFD8FF",
+  "figure": {
+   "coat": "#F1EEE4",
+   "coatBack": "#DAD5C8",
+   "scarf": "#A44732",
+   "legs": "#2E4157",
+   "legsBack": "#24364A",
+   "shoes": "#1A1A1A",
+   "skin": "#E2C3A7",
+   "hair": "#1E1A17"
+  },
+  "waveFar": [
+   "#41627E",
+   "#375975"
+  ],
+  "skylineNear": "#E4E0D4"
+ },
+ "book": {
+  "binding": "side",
+  "width": 1.5,
+  "depth": 1.05,
+  "nearPages": 4,
+  "farPages": 4,
+  "restAngle": 180,
+  "vTheta": 105,
+  "vGamma": 90
+ },
+ "ground": {
+  "preset": "gg-side",
+  "sf": [
+   -0.75,
+   0.8
+  ],
+  "marin": [
+   -0.52,
+   0.8
+  ],
+  "roads": {
+   "near": [
+    [
+     -0.4,
+     0.86
+    ],
+    [
+     -0.3,
+     0.95
+    ],
+    [
+     -0.1,
+     1.05
+    ]
+   ],
+   "far": [
+    [
+     -0.4,
+     0.86
+    ],
+    [
+     -0.55,
+     0.95
+    ],
+    [
+     -0.7,
+     1.05
+    ]
+   ]
+  }
+ },
+ "camera": {
+  "yaw": 90,
+  "elevation": 22,
+  "fov": 30,
+  "frame": 0.8,
+  "lightYaw": -14
+ },
+ "pieces": [
+  {
+   "id": "back",
+   "kit": "vfold-layer",
+   "x0": 0.36,
+   "reach": [
+    0.97,
+    0.97
+   ],
+   "bands": [
+    {
+     "kind": "waves",
+     "from": -0.97,
+     "to": 0.97,
+     "h": 0.12,
+     "amp": 0.007,
+     "len": 0.2,
+     "phase": 1.1,
+     "color": "#375975",
+     "z": -0.0045
+    },
+    {
+     "kind": "hills",
+     "from": 0.12,
+     "to": 0.97,
+     "h": 0.06,
+     "colorB": "#D2B266",
+     "color": "#3E6A4D",
+     "seed": 5,
+     "peaks": [
+      [
+       0.38,
+       0.24,
+       0.26
+      ],
+      [
+       0.62,
+       0.34,
+       0.3
+      ],
+      [
+       0.86,
+       0.27,
+       0.22
+      ]
+     ],
+     "z": 0
+    },
+    {
+     "kind": "hills",
+     "from": -0.97,
+     "to": -0.12,
+     "h": 0.05,
+     "color": "#D2B266",
+     "seed": 2,
+     "peaks": [
+      [
+       -0.3,
+       0.1,
+       0.22
+      ],
+      [
+       -0.55,
+       0.18,
+       0.24
+      ],
+      [
+       -0.82,
+       0.17,
+       0.25
+      ]
+     ],
+     "z": 0
+    }
+   ]
+  },
+  {
+   "id": "fog",
+   "label": "Fog",
+   "kit": "fog-lever",
+   "on": "back",
+   "x0": 0.36,
+   "restTop": 0.14,
+   "color": "#DCE3EA",
+   "tab": {
+    "u": 0.5,
+    "w": 0.06,
+    "out": 0.075
+   },
+   "maxPull": 0.07,
+   "span": [
+    0.1,
+    0.92
+   ],
+   "top": 0.34,
+   "thick": 0.1,
+   "pin": [
+    0.62,
+    0.25
+   ],
+   "R": 0.3,
+   "pullA": 172,
+   "restA": 210,
+   "tongue": 0.08,
+   "z": -0.0095
+  },
+  {
+   "id": "sky",
+   "label": "Sun and moon",
+   "kit": "sky-dial",
+   "role": "sky",
+   "on": "back",
+   "x0": 0.36,
+   "center": [
+    -0.7,
+    0.13
+   ],
+   "r": 0.16,
+   "behind": 0.0125
+  },
+  {
+   "id": "bridge",
+   "label": "Cars on the bridge",
+   "kit": "v-box",
+   "role": "hero",
+   "x0": -0.18,
+   "depth": 0.12,
+   "towerX": 0.44,
+   "towerH": 0.78,
+   "deckH": 0.22,
+   "reach": [
+    0.86,
+    0.86
+   ],
+   "cars": [
+    {
+     "lane": 0.3,
+     "dir": 1,
+     "at": 0.05,
+     "color": "#DCC380"
+    },
+    {
+     "lane": 0.3,
+     "dir": 1,
+     "at": 0.55,
+     "color": "#FAF9F5"
+    },
+    {
+     "lane": 0.7,
+     "dir": -1,
+     "at": 0.3,
+     "color": "#375975"
+    },
+    {
+     "lane": 0.7,
+     "dir": -1,
+     "at": 0.8,
+     "color": "#A44732"
+    }
+   ],
+   "traffic": {
+    "speed": 0.045
+   }
+  },
+  {
+   "id": "me",
+   "kit": "deck-figure",
+   "role": "hero",
+   "on": "bridge",
+   "x": -0.16,
+   "height": 0.19,
+   "behind": 0.03
+  },
+  {
+   "id": "bay",
+   "kit": "vfold-layer",
+   "x0": -0.36,
+   "reach": [
+    0.92,
+    0.92
+   ],
+   "bands": [
+    {
+     "kind": "waves",
+     "from": -0.92,
+     "to": 0.92,
+     "h": 0.05,
+     "amp": 0.012,
+     "len": 0.26,
+     "phase": 2.1,
+     "color": "#6684A0",
+     "z": 0
+    },
+    {
+     "kind": "city",
+     "from": -0.92,
+     "to": -0.52,
+     "h": 0.02,
+     "color": "#8FA2B4",
+     "z": -0.0042,
+     "blocks": [
+      [
+       -0.86,
+       0.07,
+       0.17,
+       "stepped"
+      ],
+      [
+       -0.79,
+       0.045,
+       0.27,
+       "spike"
+      ],
+      [
+       -0.72,
+       0.06,
+       0.14
+      ],
+      [
+       -0.64,
+       0.07,
+       0.1
+      ],
+      [
+       -0.57,
+       0.06,
+       0.07
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "boat",
+   "label": "Sailboat",
+   "kit": "layer-slider",
+   "role": "ground",
+   "on": "bay",
+   "x0": -0.36,
+   "slot": [
+    0.14,
+    0.84
+   ],
+   "at": 0.46,
+   "y": 0.035,
+   "h": 0.12,
+   "drift": 0.07
+  },
+  {
+   "id": "swell",
+   "kit": "vfold-layer",
+   "role": "ground",
+   "x0": -0.52,
+   "reach": [
+    0.82,
+    0.82
+   ],
+   "bands": [
+    {
+     "kind": "waves",
+     "from": -0.82,
+     "to": 0.82,
+     "h": 0.04,
+     "amp": 0.011,
+     "len": 0.22,
+     "phase": 4,
+     "color": "#94ACC0",
+     "z": 0
+    }
+   ]
+  }
+ ],
+ "idle": [
+  "traffic",
+  "boat-drift"
+ ],
+ "caption": "Halfway across, I stopped to watch the fog roll in.",
+ "stamp": "Golden Gate Bridge · Nov 8, 2026",
+ "light": {
+  "pool": 0.3,
+  "poolAt": [
+   -0.12,
+   0.34,
+   0
+  ],
+  "shadowRadius": 24,
+  "shadowIntensity": 0.42
+ }
+}

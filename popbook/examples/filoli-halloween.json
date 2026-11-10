@@ -1,0 +1,551 @@
+{
+ "id": "filoli-halloween-2026-10-31",
+ "place": "Filoli, Woodside",
+ "date": "2026-10-31",
+ "view": "side-bound V-fold panorama: the mown path runs down the gutter to the pumpkin arch, the brick house and its trees behind",
+ "caption": "A delightful, spooky Halloween.",
+ "stamp": "Filoli, Woodside · Oct 31 2026",
+ "palette": {
+  "cover": "#D2C4A2",
+  "core": "#F4F1E8",
+  "stripes": [
+   "#375975",
+   "#DCC380",
+   "#365D45",
+   "#A44732",
+   "#B0BDC8",
+   "#EDEBE0"
+  ],
+  "bay": "#7F9BB1",
+  "ocean": "#4D6E89",
+  "foam": "#EEF1F2",
+  "landLeft": "#D9C07F",
+  "landRight": "#D9C07F",
+  "road": "#77736C",
+  "roadLine": "#EDEBE0",
+  "field": "#D9C07F",
+  "fieldDark": "#B99A55",
+  "fieldLight": "#EBDDAE",
+  "path": "#E7DCC2",
+  "hedge": "#4F6A45",
+  "tuft": "#C9A95A",
+  "straw": "#D6BC78",
+  "strawLight": "#EBD9A4",
+  "strawDark": "#B0914F",
+  "trees": "#365D45",
+  "roof": "#6E4B40",
+  "chimney": "#94503A",
+  "brick": "#AE5F45",
+  "stone": "#CFC6B4",
+  "trim": "#F1EEE4",
+  "door": "#3E3330",
+  "glass": "#2E3B48",
+  "lamp": "#6A5840",
+  "pumpkin": "#CC7638",
+  "pumpkinDeep": "#B4572E",
+  "pumpkinYellow": "#DCB45E",
+  "pumpkinWhite": "#EFEADB",
+  "gourd": "#6F7A45",
+  "pumpkinRib": "#7A3A1A",
+  "stem": "#5E5233",
+  "wood": "#7A624A",
+  "woodDark": "#5A4E44",
+  "wire": "#3B342E",
+  "bulb": "#F3E3BF",
+  "gauze": "#EFCDB0",
+  "gauzeDeep": "#E0B08E",
+  "twine": "#8A6A48",
+  "hay": "#D2B266",
+  "hayDark": "#A88A45",
+  "jackInner": "#4A2A16",
+  "jackGlow": "#FFB24A",
+  "bat": "#2E2A30",
+  "batEdge": "#8C8496",
+  "moon": "#F2EEDF",
+  "moonShadow": "#5D6779",
+  "moonGlow": "#CFD8FF",
+  "figure": {
+   "coat": "#F1EEE4",
+   "coatBack": "#DAD5C8",
+   "scarf": "#A44732",
+   "legs": "#2E4157",
+   "legsBack": "#24364A",
+   "shoes": "#1A1A1A",
+   "skin": "#E2C3A7",
+   "hair": "#1E1A17",
+   "cheek": "#E0A890"
+  },
+  "bulbGlow": "#FFD08A",
+  "fieldPatch": "#C9B16E",
+  "bridge": "#A44732",
+  "sun": "#DCC380",
+  "signWhite": "#F1EEE4"
+ },
+ "book": {
+  "binding": "side",
+  "width": 1.5,
+  "depth": 1.05,
+  "nearPages": 4,
+  "farPages": 4,
+  "restAngle": 180,
+  "vTheta": 105,
+  "vGamma": 90
+ },
+ "ground": {
+  "preset": "filoli-side",
+  "path": 0.1
+ },
+ "camera": {
+  "yaw": 90,
+  "elevation": 22,
+  "fov": 30,
+  "frame": 0.8,
+  "lightYaw": -14
+ },
+ "light": {
+  "pool": 0.25,
+  "poolAt": [
+   0,
+   0.3,
+   0
+  ],
+  "shadowRadius": 24,
+  "shadowIntensity": 0.42
+ },
+ "pieces": [
+  {
+   "id": "trees",
+   "kit": "vfold-wrap",
+   "inner": {
+    "kit": "estate",
+    "page": "far",
+    "width": 0.96,
+    "facadeH": 0.22,
+    "layers": [
+     {
+      "kind": "trees",
+      "u": 0.31,
+      "h": 0.37,
+      "x0": -0.95,
+      "x1": 0.95,
+      "color": "#2F5240",
+      "seed": 3
+     },
+     {
+      "kind": "trees",
+      "u": 0.29,
+      "h": 0.28,
+      "x0": -0.95,
+      "x1": -0.5,
+      "color": "#3E6A4D",
+      "seed": 7,
+      "spires": 0.3
+     },
+     {
+      "kind": "trees",
+      "u": 0.29,
+      "h": 0.26,
+      "x0": 0.52,
+      "x1": 0.95,
+      "color": "#365D45",
+      "seed": 11,
+      "spires": 0.3
+     }
+    ]
+   },
+   "fold": [
+    {
+     "x0": 0.31,
+     "reach": [
+      0.96,
+      0.96
+     ],
+     "height": [
+      0.44,
+      0.44
+     ]
+    },
+    {
+     "x0": 0.29,
+     "reach": [
+      0.96,
+      0.96
+     ],
+     "height": [
+      0.33,
+      0.31
+     ]
+    }
+   ],
+   "role": "ground"
+  },
+  {
+   "id": "house",
+   "kit": "vfold-wrap",
+   "inner": {
+    "kit": "estate",
+    "page": "far",
+    "width": 0.96,
+    "facadeH": 0.22,
+    "layers": [
+     {
+      "kind": "roof",
+      "u": 0.26,
+      "h": 0.36,
+      "pitch": 0.08,
+      "inset": 0.11,
+      "chimneys": [
+       -0.37,
+       -0.25,
+       0.25,
+       0.37
+      ]
+     },
+     {
+      "kind": "facade",
+      "u": 0.235,
+      "h": 0.22
+     }
+    ]
+   },
+   "fold": [
+    {
+     "x0": 0.26,
+     "reach": [
+      0.52,
+      0.52
+     ],
+     "height": [
+      0.37,
+      0.37
+     ]
+    },
+    {
+     "x0": 0.235,
+     "reach": [
+      0.49,
+      0.49
+     ],
+     "height": [
+      0.23,
+      0.23
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sky",
+   "label": "Sun and moon",
+   "kit": "sky-dial",
+   "role": "sky",
+   "on": "trees",
+   "x0": 0.31,
+   "center": [
+    -0.7,
+    0.3
+   ],
+   "r": 0.13
+  },
+  {
+   "id": "bats",
+   "label": "Bats",
+   "kit": "bat-lever",
+   "on": "trees",
+   "layer": 0,
+   "x0": 0.31,
+   "tab": {
+    "page": "far",
+    "u": 0.5,
+    "color": "#2E2A30"
+   },
+   "lag": 0.35,
+   "bats": [
+    {
+     "x": -0.42,
+     "hidden": 0.18,
+     "raised": 0.62,
+     "size": 1.3
+    },
+    {
+     "x": 0.46,
+     "hidden": 0.18,
+     "raised": 0.57,
+     "size": 1.05
+    }
+   ]
+  },
+  {
+   "id": "arch",
+   "kit": "vfold-wrap",
+   "role": "hero",
+   "inner": {
+    "kit": "pumpkin-arch",
+    "page": "far",
+    "x": 0,
+    "width": 0.76,
+    "height": 0.6,
+    "legW": 0.1,
+    "spring": 0.27,
+    "seed": 9,
+    "layers": [
+     {
+      "kind": "front",
+      "u": -0.02,
+      "h": 0.62
+     },
+     {
+      "kind": "back",
+      "u": 0.08,
+      "h": 0.62
+     }
+    ]
+   },
+   "fold": [
+    {
+     "x0": 0.08,
+     "reach": [
+      0.42,
+      0.42
+     ],
+     "height": [
+      0.64,
+      0.64
+     ]
+    },
+    {
+     "x0": -0.02,
+     "reach": [
+      0.42,
+      0.42
+     ],
+     "height": [
+      0.64,
+      0.64
+     ]
+    }
+   ]
+  },
+  {
+   "id": "me",
+   "kit": "layer-figure",
+   "role": "hero",
+   "on": "arch",
+   "layer": 1,
+   "x": -0.1,
+   "height": 0.18,
+   "behind": 0.035
+  },
+  {
+   "id": "patch",
+   "kit": "vfold-layer",
+   "x0": -0.26,
+   "reach": [
+    0.94,
+    0.94
+   ],
+   "bands": [
+    {
+     "kind": "hills",
+     "from": -0.94,
+     "to": 0.94,
+     "h": 0.026,
+     "color": "#B99A55",
+     "seed": 4,
+     "peaks": [
+      [
+       -0.8,
+       0.05,
+       0.07
+      ],
+      [
+       -0.62,
+       0.042,
+       0.06
+      ],
+      [
+       -0.35,
+       0.05,
+       0.07
+      ],
+      [
+       -0.12,
+       0.04,
+       0.06
+      ],
+      [
+       0.1,
+       0.046,
+       0.07
+      ],
+      [
+       0.32,
+       0.05,
+       0.06
+      ],
+      [
+       0.55,
+       0.044,
+       0.07
+      ],
+      [
+       0.78,
+       0.052,
+       0.07
+      ]
+     ],
+     "z": -0.004
+    }
+   ],
+   "cards": [
+    {
+     "kind": "bale",
+     "x": -0.66,
+     "y": 0,
+     "w": 0.16,
+     "h": 0.07,
+     "rot": 0.02
+    },
+    {
+     "kind": "bale",
+     "x": -0.49,
+     "y": 0,
+     "w": 0.16,
+     "h": 0.07,
+     "rot": -0.02,
+     "seed": 5
+    },
+    {
+     "kind": "bale",
+     "x": -0.575,
+     "y": 0.068,
+     "w": 0.16,
+     "h": 0.07,
+     "seed": 7
+    },
+    {
+     "kind": "pumpkin",
+     "x": -0.33,
+     "r": 0.05,
+     "color": "pumpkinDeep"
+    },
+    {
+     "kind": "pumpkin",
+     "x": -0.24,
+     "r": 0.032,
+     "color": "pumpkinYellow"
+    },
+    {
+     "kind": "pumpkin",
+     "x": 0.72,
+     "r": 0.054,
+     "color": "pumpkin"
+    },
+    {
+     "kind": "pumpkin",
+     "x": 0.8,
+     "r": 0.03,
+     "color": "pumpkinWhite"
+    },
+    {
+     "kind": "pumpkin",
+     "x": -0.86,
+     "r": 0.036,
+     "color": "pumpkin"
+    },
+    {
+     "kind": "lantern",
+     "x": -0.13,
+     "r": 0.026
+    },
+    {
+     "kind": "lantern",
+     "x": 0.16,
+     "r": 0.024
+    }
+   ],
+   "role": "ground"
+  },
+  {
+   "id": "jack",
+   "label": "Pumpkin wheel",
+   "kit": "revolving-picture",
+   "on": "patch",
+   "x0": -0.26,
+   "at": [
+    -0.575,
+    0.21
+   ],
+   "r": 0.068
+  },
+  {
+   "id": "roller",
+   "label": "Rolling pumpkin",
+   "kit": "layer-roller",
+   "on": "patch",
+   "x0": -0.26,
+   "slot": [
+    0.2,
+    0.62
+   ],
+   "r": 0.034,
+   "color": "pumpkin",
+   "drift": 0.12,
+   "role": "ground"
+  },
+  {
+   "id": "lights",
+   "kit": "string-lights-v",
+   "seed": 6,
+   "posts": [
+    {
+     "on": "patch",
+     "x": -0.9,
+     "h": 0.32
+    },
+    {
+     "on": "trees",
+     "x": -0.6,
+     "h": 0.44,
+     "z": 0.01
+    },
+    {
+     "on": "trees",
+     "x": 0.6,
+     "h": 0.44,
+     "z": 0.01
+    },
+    {
+     "on": "patch",
+     "x": 0.9,
+     "h": 0.32
+    }
+   ],
+   "strings": [
+    {
+     "from": 0,
+     "to": 1,
+     "bulbs": 8,
+     "sag": 0.07
+    },
+    {
+     "from": 1,
+     "to": 2,
+     "bulbs": 12,
+     "sag": 0.05
+    },
+    {
+     "from": 2,
+     "to": 3,
+     "bulbs": 8,
+     "sag": 0.07
+    }
+   ],
+   "role": "ground"
+  }
+ ],
+ "idle": [
+  "me-wave",
+  "roller",
+  "lights-twinkle"
+ ]
+}
