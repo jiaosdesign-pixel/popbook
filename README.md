@@ -12,7 +12,7 @@ I built it for my own site, where the book holds one moment from my week. This i
 
 popbook is an [Agent Skill](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview): a folder with a `SKILL.md`.
 
-- **Claude Code:** copy the `popbook/` folder to `~/.claude/skills/popbook/`.
+- **Claude Code:** `cp -R popbook ~/.claude/skills/` from the repo folder (it becomes `~/.claude/skills/popbook/`).
 - **Claude app:** zip the `popbook/` folder and add it under Settings, Capabilities, Skills.
 - **Other agents:** point yours at `popbook/SKILL.md`.
 

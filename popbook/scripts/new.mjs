@@ -35,7 +35,7 @@ const m = {
 fs.mkdirSync(dir, { recursive: true });
 fs.writeFileSync(file, JSON.stringify(m, null, 1) + '\n');
 console.log(`wrote ${path.relative(process.cwd(), file)} (ground and palette from examples/${like}.json)`);
-const show = (f) => { const r = path.relative(process.cwd(), f); return r.startsWith('..') ? f : r; };
+const show = (f) => { const r = path.relative(process.cwd(), f); return r.startsWith('..') ? f : r || '.'; };
 console.log(`next: fill "pieces" (references/kit.md), then
   node ${show(path.join(ROOT, 'scripts/build.mjs'))} ${show(dir)}/*.json --out ${show(path.join(dir, 'book.html'))} --title "..."
   node ${show(path.join(ROOT, 'scripts/check.mjs'))} ${show(path.join(dir, 'book.html'))} --page ${id}`);

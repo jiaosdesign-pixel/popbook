@@ -646,9 +646,9 @@ export function skyDial(ctx, s) {
   const dialObj = new THREE.Group(); dialObj.add(holder);
   let phi = 0, held = false, last = 0, nudge = -1, hover = 0, hoverT = 0, lamps = 0;
   const set = (a) => { phi = Math.max(0, Math.min(Math.PI, a)); spin.rotation.z = -phi; };
-  // the hint, after every page turn: the dial turns about a third of the way toward the other half, the page's light
-  // leans with it (lamps start to glow by day, the sun shows by night), holds a beat and settles back
-  const PEEK = 0.34, PEEK_T = 2.1;
+  // the hint, after every page turn: the dial turns about a quarter of the way toward the other half, the page's light
+  // leans with it (lamps start to glow by day, the sun shows by night), holds a beat and settles back, in 1.3 s
+  const PEEK = 0.28, PEEK_T = 1.3;
   const peekAt = (t) => {
     if (t < 0 || t > 1) return 0;
     if (t < 0.36) { const u = t / 0.36; return 1 - (1 - u) ** 3; }
@@ -675,8 +675,8 @@ export function skyDial(ctx, s) {
       const busy = peeking || Math.abs(hoverT - hover) > 1e-3;
       if (peeking) { nudge += dt / PEEK_T; if (nudge > 1) nudge = -1; }
       hover += (hoverT - hover) * Math.min(1, dt * 10);
-      // first: relighting resets the dial to the theme (dial.set). Night leans half as far: day light lifts a dark page fast
-      if (peeking && !held) ctx.sky?.peek?.(PEEK * peek() * (phi > Math.PI / 2 ? 0.5 : 1));
+      // first: relighting resets the dial to the theme (dial.set). Night leans a third as far: day light lifts a dark page fast
+      if (peeking && !held) ctx.sky?.peek?.(PEEK * peek() * (phi > Math.PI / 2 ? 0.3 : 1));
       if (busy) show();
       return busy ? 'fast' : false;
     },

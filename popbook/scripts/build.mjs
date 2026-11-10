@@ -180,7 +180,7 @@ if (pages.length) {
     paint();
   } catch (e) {
     console.error('[popbook] the book could not start:', e);
-    const p = document.createElement('pre'); p.className = 'errors'; p.textContent = 'The book needs WebGL and a recent browser. ' + (e && e.message || e); $('book').replaceWith(p);
+    const p = document.createElement('pre'); p.className = 'errors'; const msg = String(e && e.message || e); p.textContent = 'The book could not start: ' + msg + (/webgl|context/i.test(msg) ? ' (it needs WebGL and a recent browser)' : ''); $('book').replaceWith(p);
   }
 }
 </script>

@@ -18,9 +18,9 @@ const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 ? args[i + 1] : d; };
 const file = args.find((a, i) => !a.startsWith('--') && !['--out', '--page'].includes(args[i - 1]));
 if (!file || !fs.existsSync(file)) { console.error('usage: check.mjs book.html [--out dir] [--page id]'); process.exit(2); }
-const outDir = path.resolve(opt('out', path.join(path.dirname(file), 'shots')));
-fs.mkdirSync(outDir, { recursive: true });
 const pageId = opt('page');
+const outDir = path.resolve(opt('out', path.join(path.dirname(file), 'shots', pageId || 'newest'))); // one folder per page, so checks never overwrite each other
+fs.mkdirSync(outDir, { recursive: true });
 
 async function playwright() {
   for (const t of [process.env.PLAYWRIGHT_PATH, 'playwright', 'playwright-core'].filter(Boolean)) { try { return await import(t); } catch { /* next */ } }
@@ -49,10 +49,16 @@ for (const theme of ['night', 'day']) for (const phone of [true, false]) {
     problems.push(shown ? 'validator: ' + shown.trim() : `${theme} ${phone ? 'phone' : 'desktop'}: the book never started (${errors[0] || 'no WebGL?'})`);
     await ctx.close(); continue;
   }
-  await p.evaluate(async ({ theme, pageId }) => {
+  const turned = await p.evaluate(async ({ theme, pageId }) => {
     const b = window.__book; window.__setTheme?.(theme, true); await b.setTheme(theme, { instant: true });
-    if (pageId && b.meta?.id !== pageId) { const list = JSON.parse(document.getElementById('moments').textContent); const m = list.find((x) => x.id === pageId); if (m) await b.setMoment(m); }
+    if (pageId && b.meta?.id !== pageId) {
+      const list = JSON.parse(document.getElementById('moments').textContent); const m = list.find((x) => x.id === pageId);
+      if (!m) return `no page '${pageId}' in this book`;
+      try { await b.setMoment(m); } catch (e) { return String(e && e.message || e); }
+    }
+    return '';
   }, { theme, pageId });
+  if (turned) { problems.push('validator: ' + turned); await ctx.close(); continue; }
   await p.waitForTimeout(3500);
   const skipped = await p.evaluate(() => document.querySelector('.errors')?.textContent || '');
   if (skipped && !problems.some((q) => q.startsWith('validator'))) problems.push('validator: ' + skipped.trim());
