@@ -44,4 +44,4 @@ Built on [three.js](https://threejs.org) (MIT). Type: Alegreya Sans by Huerta Ti
 
 ## License
 
-MIT for the code and the examples (proposed). The fonts keep their own licence (`popbook/fonts/OFL-*.txt`), and three.js keeps its own (`popbook/vendor/three/LICENSE`).
+MIT for the code and the examples. The fonts keep their own licence (`popbook/fonts/OFL-*.txt`), and three.js keeps its own (`popbook/vendor/three/LICENSE`).
