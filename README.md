@@ -32,7 +32,7 @@ Your agent reads the photo, picks pieces from the kit, folds them into a spread,
 |---|---|
 | `popbook/SKILL.md` | the instructions your agent follows |
 | `popbook/references/kit.md` | every paper piece, its parameters, and the fold-flat rules |
-| `popbook/examples/` | four pages from my book, as worked examples |
+| `popbook/examples/` | four scenes from my book, with my words and dates taken out, as worked examples |
 | `popbook/scripts/` | `new.mjs` starts a page, `build.mjs` makes the one HTML file, `check.mjs` tests it in a headless browser, `photo.py` reads a photo's date and colours |
 | `popbook/book/` | the pop-up engine (three.js) |
 | `popbook/vendor/`, `popbook/fonts/` | three.js and the two typefaces, with their licences |
@@ -44,4 +44,4 @@ Built on [three.js](https://threejs.org) (MIT). Type: Alegreya Sans by Huerta Ti
 
 ## License
 
-MIT for the code and the examples. The fonts keep their own licence (`popbook/fonts/OFL-*.txt`), and three.js keeps its own (`popbook/vendor/three/LICENSE`).
+MIT for the code and the examples (proposed). The fonts keep their own licence (`popbook/fonts/OFL-*.txt`), and three.js keeps its own (`popbook/vendor/three/LICENSE`).

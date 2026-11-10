@@ -1,7 +1,7 @@
 {
  "id": "golden-gate-2026-11",
  "place": "Golden Gate Bridge, San Francisco",
- "date": "2026-11-08",
+ "date": "2026-11",
  "view": "side-bound V-fold panorama, looking west from the bay down the gutter: SF on the left page, Marin on the right, the Pacific and its fog beyond the Gate",
  "palette": {
   "cover": "#D2C4A2",
@@ -46,9 +46,9 @@
   "moonShadow": "#5D6779",
   "moonGlow": "#CFD8FF",
   "figure": {
-   "coat": "#F1EEE4",
-   "coatBack": "#DAD5C8",
-   "scarf": "#A44732",
+   "coat": "#C9C3B5",
+   "coatBack": "#B3AD9F",
+   "scarf": "#3E5A73",
    "legs": "#2E4157",
    "legsBack": "#24364A",
    "shoes": "#1A1A1A",
@@ -395,8 +395,7 @@
   "traffic",
   "boat-drift"
  ],
- "caption": "Halfway across, I stopped to watch the fog roll in.",
- "stamp": "Golden Gate Bridge · Nov 8, 2026",
+ "caption": "",
  "light": {
   "pool": 0.3,
   "poolAt": [

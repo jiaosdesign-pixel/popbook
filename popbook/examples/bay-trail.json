@@ -1,10 +1,9 @@
 {
  "id": "bay-trail-2026-11-07",
  "place": "Bay Trail, Foster City",
- "date": "2026-11-07",
+ "date": "2026-11",
  "view": "side-bound V-fold panorama from the trail: the bay and the hazy far shore behind, the shore, the trail and the shrubs in front",
- "caption": "Logging some easy miles on my bike.",
- "stamp": "Bay Trail, Foster City · Nov 7 2026",
+ "caption": "",
  "palette": {
   "cover": "#D2C4A2",
   "core": "#F4F1E8",
@@ -82,9 +81,9 @@
    "helmetStripe": "#375975"
   },
   "figure": {
-   "coat": "#F1EEE4",
-   "coatBack": "#DAD5C8",
-   "scarf": "#A44732",
+   "coat": "#C9C3B5",
+   "coatBack": "#B3AD9F",
+   "scarf": "#3E5A73",
    "legs": "#2E4157",
    "legsBack": "#24364A",
    "shoes": "#1A1A1A",

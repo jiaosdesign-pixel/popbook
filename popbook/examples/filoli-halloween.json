@@ -1,10 +1,9 @@
 {
  "id": "filoli-halloween-2026-10-31",
  "place": "Filoli, Woodside",
- "date": "2026-10-31",
+ "date": "2026-10",
  "view": "side-bound V-fold panorama: the mown path runs down the gutter to the pumpkin arch, the brick house and its trees behind",
- "caption": "A delightful, spooky Halloween.",
- "stamp": "Filoli, Woodside · Oct 31 2026",
+ "caption": "",
  "palette": {
   "cover": "#D2C4A2",
   "core": "#F4F1E8",
@@ -65,9 +64,9 @@
   "moonShadow": "#5D6779",
   "moonGlow": "#CFD8FF",
   "figure": {
-   "coat": "#F1EEE4",
-   "coatBack": "#DAD5C8",
-   "scarf": "#A44732",
+   "coat": "#C9C3B5",
+   "coatBack": "#B3AD9F",
+   "scarf": "#3E5A73",
    "legs": "#2E4157",
    "legsBack": "#24364A",
    "shoes": "#1A1A1A",

@@ -1,4 +1,4 @@
-// Kit, part 3: a shop front on the side-bound panorama (Peet's Coffee, Mountain View, Nov 2026).
+// Kit, part 3: a shop front on the side-bound panorama.
 //   shop-front      a café front as a V-fold layer: a stone pier, a stucco sign band, tall storefront glass whose
 //                   warm room lights up at night, and a glass double door split from the wall on brads. A pull-tab
 //                   at the reader's edge swings both leaves open: The figure is in the doorway with her cup. On its own:

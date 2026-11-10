@@ -7,7 +7,7 @@ description: Turn a photo or a line about someone's day into a page of a paper p
 
 One page of a pop-up book is one JSON file (a "moment") built from a kit of paper pieces. `scripts/build.mjs` turns one or more moments into one HTML file. The photo is reference only: it never goes into the book.
 
-Read first: `references/kit.md` (every piece, its parameters, the palette keys it reads, the fold-flat rules), then the example in `examples/` nearest in subject to the photo: a shore or a ride (`bay-trail`), a garden, a house or a festive scene (`filoli-halloween`), a landmark (`golden-gate`), a shop or a café (`peets`).
+Read first: `references/kit.md` (every piece, its parameters, the palette keys it reads, the fold-flat rules), then the example in `examples/` nearest in subject to the photo: a shore or a ride (`bay-trail`), a garden, a house or a festive scene (`filoli-halloween`), a landmark (`golden-gate`), a shop or a café (`cafe`).
 
 ## Inputs
 

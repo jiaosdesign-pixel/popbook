@@ -1,10 +1,9 @@
 {
- "id": "peets",
- "place": "Peet's Coffee, Mountain View",
- "date": "2026-11-04",
+ "id": "cafe",
+ "place": "A café, Mountain View",
+ "date": "2026-11",
  "view": "side-bound V-fold panorama of a café front at first light: soft hills and a tree line behind, the stone pier, sign band and lit glass of the shop with the figure in the glass double door, a patio in front (umbrella, table, two chairs; a young tree in a planter), a planted bed, the sidewalk, kerb and lot at the reader's edge (proposed)",
- "caption": "Needed more coffee to start the day.",
- "stamp": "Peet's Coffee, Mountain View · Nov 4 2026",
+ "caption": "",
  "palette": {
   "cover": "#D2C4A2",
   "core": "#F4F1E8",
@@ -53,9 +52,9 @@
   "grassDark": "#6E8460",
   "grassLight": "#A7B48C",
   "figure": {
-   "coat": "#F1EEE4",
-   "coatBack": "#DAD5C8",
-   "scarf": "#A44732",
+   "coat": "#C9C3B5",
+   "coatBack": "#B3AD9F",
+   "scarf": "#3E5A73",
    "legs": "#2E4157",
    "legsBack": "#24364A",
    "shoes": "#1A1A1A",
