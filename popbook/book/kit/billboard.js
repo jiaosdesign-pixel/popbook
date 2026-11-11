@@ -278,7 +278,7 @@ export function billboard(ctx, s) {
   // tips the group to one side, a look holds its first direction); the next tap sets it back.
   const REST = { a: 0, dx: 0, dy: 0, sy: 1 };
   const react = (bd) => { const k = showing(bd); let n = 0; for (const m of bd.moves) if (m.face === k) { m.t0 = -2; n++; } return n; };
-  const showing = (bd) => (bd.anim || bd.p > 0 || bd.peek >= 0 || (drag && drag.active) ? -1 : bd.base);
+  const showing = (bd) => (bd.anim || bd.p > 0 || bd.peek >= 0 || (drag && drag.active) || (tab && tab.pulling) ? -1 : bd.base);
   const value = (m, t) => {
     const u = t - m.t0;
     if (m.kind === 'wave') { const x = u / m.dur; return x >= 1 ? null : { a: m.amp * Math.sin(Math.PI * x) * Math.sin(2 * Math.PI * m.swings * x) }; }
@@ -362,11 +362,12 @@ export function billboard(ctx, s) {
       return best;
     };
     drag = {
+      label: s.dragLabel || (s.label ? s.label + ', the boards' : 'The boards'), // its key button's name when a tab is the first drag
       targets: [grip, ...tappable.map((bd) => bd.proxy)], obj: plane, axis: 2, local: true,
       hover(on) { g.hover = on ? 1 : 0; for (const bd of boards) { bd.hover = g.hover; pose(bd); } },
       begin(p) {
         // a board still finishing a turn lands first, so the stroke starts from the face it shows
-        for (const bd of playable) { if (bd.anim) { if (bd.anim.to >= 1) land(bd); bd.anim = null; } bd.p = 0; bd.peek = -1; }
+        settle();
         g.on = true; g.grab = p.x; g.want = 0; g.s = 0; g.far = 0; g.bd = boardAt(p.x);
         g.span = SPAN * (g.bd.P.z - g.bd.P.a) * cos[g.bd.side];
       },
@@ -393,11 +394,22 @@ export function billboard(ctx, s) {
       return true;
     };
   }
-  const tab = !drag && s.tab ? makePullTab(ctx, { ...s.tab, color: s.tab.color || pal.bridge || '#A44732', onBegin() { tabFree = true; }, onEnd() {
+  // a board still turning when a new stroke or pull starts lands where it is nearer, so the stroke starts from a face
+  function settle() { for (const bd of playable) { if (bd.anim && bd.p > 0.5 && bd.anim.to >= 1) land(bd); bd.anim = null; bd.p = 0; bd.peek = -1; } }
+  // the pull-tab. Without `drag` it springs back and every board turns while it is out. With `drag` it is the set's
+  // switch and stays where it is left: in for the first face, out for the second (a two-face set), so pulling it out
+  // turns the boards on and pushing it in turns them back; it follows the boards when a stroke on a board or a key
+  // turns them. tabAt is where the piece last put it (a nudge shows as tab.k moving away from it).
+  const setTab = !!(drag && s.tab);
+  let tabAt = 0;
+  const odd = () => playable[0].base % 2 === 1; // the set shows its second face: the tab sits out
+  const tab = s.tab ? makePullTab(ctx, { ...s.tab, color: s.tab.color || pal.bridge || '#A44732', ...(setTab ? { springBack: false } : {}), onBegin() { tabFree = true; if (setTab) settle(); }, onEnd() {
     // let go past half way and the boards finish the turn; short of it they fall back
+    if (setTab) { tabAt = tab.k; for (const bd of playable) bd.anim = { from: bd.p, to: bd.p > 0.5 ? 1 : 0 }; return; }
     for (const bd of boards) if (bd.F > 1 && !bd.anim) bd.anim = { from: bd.p, to: bd.p > 0.45 ? 1 : 0 };
     tabFree = false;
   } }) : null;
+  if (setTab) tab.set(tabAt = odd() ? 1 : 0);
   if (tab) parts.push(tab.part);
   parts.push(...extras);
   ctx.lamp((k) => {
@@ -421,8 +433,9 @@ export function billboard(ctx, s) {
     pokes: drag
       ? [{ targets: tappable.map((bd) => bd.proxy), run() { for (const bd of tappable) tap(bd); }, hover: drag.hover }]
       : tappable.map((bd) => ({ targets: [bd.proxy], run() { tap(bd); }, hover(on) { bd.hover = on ? 1 : 0; pose(bd); } })),
-    drag: drag || (tab ? tab.drag : undefined),
-    nudge: drag ? () => { if (loopsNow) for (const bd of playable) drag.peek(bd); } : tab ? () => tab.nudge() : undefined,
+    // the tab first: the piece's key button pulls it, as on every page with a tab; the boards' drag gets the second
+    drag: setTab ? [tab.drag, drag] : drag || (tab ? tab.drag : undefined),
+    nudge: tab ? () => tab.nudge() : drag ? () => { if (loopsNow) for (const bd of playable) drag.peek(bd); } : undefined,
     actions: {
       turn(i = 0) { const bd = playable[i]; if (bd) start(bd, loopsNow); }, flip, pull(k = 1) { tab?.set(k); },
       react(i = 0) { const bd = tappable[i]; if (bd) react(bd); }, wave(i = 0) { const bd = boards.filter((b) => b.moves.some((m) => m.kind === 'wave'))[i]; if (bd) react(bd); },
@@ -431,9 +444,17 @@ export function billboard(ctx, s) {
       loopsNow = loops;
       let busy = tab ? tab.tick(dt) : false;
       if (drag && drag.tick(dt)) busy = true;
-      if (tab && !tab.pulling && !tabFree && tab.k < 0.01) tabFree = true;
+      if (tab && !setTab && !tab.pulling && !tabFree && tab.k < 0.01) tabFree = true;
+      // the set's tab drives the boards while it is pulled or nudged (k off where the piece put it)
+      const tabDrives = setTab && !drag.active && (tab.pulling || Math.abs(tab.k - tabAt) > 2e-3);
+      if (setTab && tab.pulling) tabAt = tab.k;
       for (const bd of playable) {
         if (drag?.active) { /* the finger has it */ }
+        else if (tabDrives) {
+          // a pull turns the louvers with the tab; the nudge (the tab's hint wiggle) only leans the first few
+          const o = bd.base % 2 === 1, k = tab.pulling ? tab.k : tabAt + (tab.k - tabAt) * 0.4;
+          bd.p = Math.max(0, Math.min(0.999, o ? 1 - k : k)); bd.dir = o ? -1 : 1; bd.anim = null; busy = true;
+        }
         else if (bd.anim) {
           const dir = Math.sign(bd.anim.to - bd.p) || 1;
           bd.p = loops ? bd.p + (dir * dt) / TURN : bd.anim.to;
@@ -446,17 +467,22 @@ export function billboard(ctx, s) {
           bd.peek += dt / 1.2;
           if (bd.peek >= 1 || !loops) { bd.peek = -1; bd.p = 0; } else bd.p = PEEK * Math.sin(Math.PI * bd.peek) ** 2;
           bd.dir = 1; busy = true;
-        } else if (tab && (tab.pulling || (tabFree && tab.k > 0))) { bd.dir = 1; bd.p = Math.min(0.999, tab.k); busy = true; }
+        } else if (tab && !setTab && (tab.pulling || (tabFree && tab.k > 0))) { bd.dir = 1; bd.p = Math.min(0.999, tab.k); busy = true; }
         else if (bd.p) { bd.p = 0; busy = true; }
         // on its own: each beat sends a board to (its first face + beats), so boards that a tap or a pull put out of
         // step fall back into their pattern (two boards never show the same ad for long)
-        if (loops && s.every !== 0 && !bd.anim && !(tab && tab.pulling) && !drag?.active && t >= bd.next) {
+        if (loops && s.every !== 0 && !bd.anim && !(tab && tab.pulling) && !drag?.active && !setTab && t >= bd.next) {
           bd.beats++; bd.next = t + (s.every ?? 7);
           const steps = (((bd.start + bd.beats - bd.base) % bd.F) + bd.F) % bd.F;
           if (steps) { bd.dir = 1; bd.anim = { from: bd.p, to: 1, steps }; }
         }
         else if (t + (s.every ?? 7) * 2 < bd.next) bd.next = t + (s.every ?? 7); // the clock went back (a new page): keep the beat
         pose(bd);
+      }
+      // otherwise the tab follows the boards: out by as far as the set has turned toward its second face
+      if (setTab && !tabDrives) {
+        const bd = playable[0], k = odd() ? 1 - bd.p : bd.p;
+        if (Math.abs(k - tabAt) > 1e-4) { tab.set(tabAt = k); busy = true; }
       }
       for (const bd of boards) if (bd.moves.length && movesTick(bd, t, loops)) busy = true;
       return busy ? 'fast' : false;

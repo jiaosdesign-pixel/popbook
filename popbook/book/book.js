@@ -1137,7 +1137,7 @@ export async function mountBook(container, opts = {}) {
       let k = 0;
       const poke = pokes.length > 1 ? { get targets() { return pokes[k % pokes.length].targets; }, run() { pokes[k++ % pokes.length].run(); } } : pokes[0];
       if (poke || drags[0]) add(name, poke, drags[0], b.nudge);
-      drags.slice(1).forEach((d, i) => add(`${name} ${i + 2}`, null, d));
+      drags.slice(1).forEach((d, i) => add(d.label || `${name} ${i + 2}`, null, d)); // a piece may name its second drag
     }
     if (W.m.tap && W.tapTargets.size) add(W.m.tap.label || [].concat(W.m.tap.on)[0], { targets: [...W.tapTargets], run: runTap });
   }
