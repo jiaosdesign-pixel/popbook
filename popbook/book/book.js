@@ -613,9 +613,11 @@ export async function mountBook(container, opts = {}) {
     const prevBg = scene.background;
     scene.background = skyBacking(Lcur);
     const prevTarget = renderer.getRenderTarget();
+    const prevClear = renderer.getClearColor(new THREE.Color()), prevAlpha = renderer.getClearAlpha();
     renderer.shadowMap.needsUpdate = true;
     const out = draw();
     renderer.setRenderTarget(prevTarget);
+    renderer.setClearColor(prevClear, prevAlpha); // the still must leave the live canvas as it found it (transparent)
     scene.background = prevBg;
     hide.forEach((o, i) => { o.visible = was[i]; });
     pose(w, keepPhi);
