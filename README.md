@@ -6,7 +6,7 @@ Popbook is a skill for AI agents. You send your agent a photo from your day (or 
 
 I built it for my own site, where the book holds one moment from my week. This is the same engine, packaged for you.
 
-![A Popbook page, by day and by night](docs/card.png)
+![Four Popbook pages: the Golden Gate Bridge by day, a bay trail by night, a café by night, a Halloween garden by day](docs/pages.jpg)
 
 ## Install
 
