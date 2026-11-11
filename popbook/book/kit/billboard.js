@@ -8,7 +8,10 @@
 //               on the catwalk light the faces. A board with one face is a plain sign (an overhead road sign on a
 //               truss, a shop sign). The artwork lives in the moment file: each face is a background colour plus
 //               text lines, SVG path data and simple shapes, drawn to a canvas, so the piece itself carries no
-//               picture of its own.
+//               picture of its own. A group in the artwork can `wave`: it rocks about a pivot for a moment every few
+//               seconds and when the board is tapped (a figure's hand on a screen ad); a board with a wave answers a
+//               tap with it instead of turning. `screen: true` makes a board a lit screen: neutral light of its own,
+//               no lamps or catwalk unless asked.
 import * as THREE from 'three';
 import { card, polyShape, paperMaterial, aoStrip, glowSprite } from '../engine/paper.js';
 import { sstep } from '../engine/motion.js';
@@ -37,10 +40,11 @@ function boardPlan(b) {
     const n = b.posts ?? 2, w = Math.abs(z - a), m = Math.min(a, z);
     return n === 1 ? [m + w / 2] : Array.from({ length: n }, (_, i) => m + w * (0.2 + (0.6 * i) / Math.max(1, n - 1)));
   })();
-  const postTop = truss ? y1 + 0.012 : y0 + (y1 - y0) * 0.7;
-  const reach = Math.max(hi + frame, ...posts.map((p) => Math.abs(p) + 0.012)) + 0.01;
+  const postTop = b.postTop ?? (truss ? y1 + 0.012 : y0 + (y1 - y0) * 0.7);
+  const pw = b.postW ?? (posts.length === 1 ? 0.026 : 0.014);
+  const reach = Math.max(hi + frame, ...posts.map((p) => Math.abs(p) + pw / 2 + 0.005)) + 0.01;
   const top = Math.max(y1 + frame, postTop);
-  return { a: Math.min(a, z), z: Math.max(a, z), lo, hi, sg, y0, y1, faces, truss, frame, posts, postTop, reach, top };
+  return { a: Math.min(a, z), z: Math.max(a, z), lo, hi, sg, y0, y1, faces, truss, frame, posts, postTop, pw, reach, top };
 }
 function billboardDeclare(s, book) {
   const { theta, gamma } = vAngles(s, book);
@@ -62,21 +66,26 @@ function billboardDeclare(s, book) {
 //   { path: '<SVG path data>', x, y, scale, rot (deg), color, stroke, lineWidth }
 //   { shape: 'rect' | 'ellipse' | 'circle', x, y, w, h (rect: top-left corner and size; r rounds the corners),
 //     rx, ry (ellipse, centred on x, y), r (circle), rot (deg), color, stroke, lineWidth }
-//   { group: [...items], x, y, scale, rot }
-function drawItems(g, items) {
+//   { group: [...items], x, y, scale, rot, wave }
+// wave (a group only): { pivot: [x, y] (group units, default 0, 0), angle (deg each way, 16), swings (2), dur (s, 1.6),
+//   every (s between waves on its own, 6; 0 = only on a tap), phase (s before the first, 2) }. Text may set maxWidth
+//   (view units): a line wider than that is squeezed to fit, so a layout holds whatever the reader's system font is.
+function drawItems(g, items, pose) {
   for (const it of items || []) {
     g.save();
     g.globalAlpha = it.opacity ?? 1;
     if (it.group) {
       g.translate(it.x ?? 0, it.y ?? 0); if (it.rot) g.rotate((it.rot * Math.PI) / 180); if (it.scale) g.scale(it.scale, it.scale);
-      drawItems(g, it.group);
+      const a = pose?.get(it);
+      if (a) { const [px, py] = it.wave?.pivot || [0, 0]; g.translate(px, py); g.rotate(a); g.translate(-px, -py); }
+      drawItems(g, it.group, pose);
     } else if (it.text != null) {
       g.fillStyle = it.color || '#111';
       g.font = `${it.italic ? 'italic ' : ''}${it.weight ?? 500} ${it.size ?? 40}px ${it.font || FONT}`;
       g.textAlign = it.align || 'left'; g.textBaseline = it.baseline || 'alphabetic';
       if (it.tracking != null && 'letterSpacing' in g) g.letterSpacing = `${it.tracking}px`;
       g.translate(it.x ?? 0, it.y ?? 0); if (it.rot) g.rotate((it.rot * Math.PI) / 180);
-      g.fillText(String(it.text), 0, 0);
+      if (it.maxWidth) g.fillText(String(it.text), 0, 0, it.maxWidth); else g.fillText(String(it.text), 0, 0);
     } else {
       g.translate(it.x ?? 0, it.y ?? 0); if (it.rot) g.rotate((it.rot * Math.PI) / 180);
       let p;
@@ -94,18 +103,28 @@ function drawItems(g, items) {
     g.restore();
   }
 }
+// the groups in a face that wave
+function wavesIn(items, out = []) {
+  for (const it of items || []) if (it.group) { if (it.wave) out.push(it); wavesIn(it.group, out); }
+  return out;
+}
 function faceTexture(face, w, h, px = 2600) {
   const c = document.createElement('canvas');
   c.width = Math.max(4, Math.round(Math.min(2048, w * px))); c.height = Math.max(4, Math.round(c.width * (h / w)));
   const g = c.getContext('2d');
   const [vw, vh] = face.view || [1000, (1000 * h) / w];
-  g.scale(c.width / vw, c.height / vh);
-  if (face.bg2) { const gr = g.createLinearGradient(0, 0, 0, vh); gr.addColorStop(0, face.bg || '#fff'); gr.addColorStop(1, face.bg2); g.fillStyle = gr; }
-  else g.fillStyle = face.bg || '#F4F1E8';
-  g.fillRect(0, 0, vw, vh);
-  drawItems(g, face.items);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  // draw (and redraw, when a wave moves) the face; pose maps a waving group to its angle now
+  t.userData.draw = (pose) => {
+    g.setTransform(1, 0, 0, 1, 0, 0); g.scale(c.width / vw, c.height / vh);
+    if (face.bg2) { const gr = g.createLinearGradient(0, 0, 0, vh); gr.addColorStop(0, face.bg || '#fff'); gr.addColorStop(1, face.bg2); g.fillStyle = gr; }
+    else g.fillStyle = face.bg || '#F4F1E8';
+    g.fillRect(0, 0, vw, vh);
+    drawItems(g, face.items, pose);
+    t.needsUpdate = true;
+  };
+  t.userData.draw(null);
   return t;
 }
 
@@ -133,8 +152,8 @@ export function billboard(ctx, s) {
     const ap = F === 3 ? w / (2 * Math.sqrt(3)) : F === 2 ? 0.0012 : 0; // apothem: how far each face sits from the rod
     const zc = zFront - ap;
     // posts (cards standing on the layer, behind the board) and, for an overhead sign, a truss the board hangs on
-    const pw = b.postW ?? (P.posts.length === 1 ? 0.026 : 0.014);
-    for (const x of P.posts) st0.add(card(rect(x - pw / 2, 0, x + pw / 2, P.postTop), { color: C.post, depth: 0.005, curveSegments: 1 }));
+    const pw = P.pw;
+    for (const x of P.posts) st0.add(card(rect(x - pw / 2, 0, x + pw / 2, P.postTop), { color: b.postColor || C.post, depth: 0.005, curveSegments: 1 }));
     if (P.truss) {
       const tx0 = P.posts[0], tx1 = P.posts[P.posts.length - 1], th = Math.min(0.05, H * 0.45), ty = P.y0 + H * 0.5 - th / 2;
       const bars = [rect(tx0, ty, tx1, ty + 0.006), rect(tx0, ty + th - 0.006, tx1, ty + th)];
@@ -153,10 +172,16 @@ export function billboard(ctx, s) {
       const f = P.frame, fr = card([rect(P.a - f, P.y0 - f, P.z + f, P.y0), rect(P.a - f, P.y1, P.z + f, P.y1 + f), rect(P.a - f, P.y0, P.a, P.y1), rect(P.z, P.y0, P.z + f, P.y1)], { color: C.frame, depth: 0.004, curveSegments: 1 });
       fr.position.z = zFront + 0.002; st0.add(fr);
     }
-    const lit = b.lit ?? s.lit ?? 0.9;
+    const lit = b.lit ?? s.lit ?? 0.9, screen = !!b.screen;
+    const waves = [];
     const mats = P.faces.map((face) => {
       const t = faceTexture(face, Wb, H, b.px ?? 2600);
-      const m = paperMaterial('#fff', { map: t, emissiveMap: t, emissive: '#fff6e6', noCache: true });
+      for (const it of wavesIn(face.items)) {
+        const w = it.wave || {};
+        waves.push({ it, tex: t, amp: ((w.angle ?? 16) * Math.PI) / 180, swings: w.swings ?? 2, dur: w.dur ?? 1.6, every: w.every ?? 6, next: w.phase ?? 2, t0: -1, a: 0 });
+      }
+      // printed vinyl takes the lamps' warm light; a screen gives its own neutral light
+      const m = paperMaterial('#fff', { map: t, emissiveMap: t, emissive: screen ? '#ffffff' : '#fff6e6', noCache: true, ...(screen ? { tooth: 0, grain: 0, bump: 0 } : {}) });
       faceMats.push([m, lit, b.dayGlow ?? s.dayGlow ?? 0.12]); return m;
     });
     if (!mats.length) mats.push(paperMaterial(C.back));
@@ -168,24 +193,27 @@ export function billboard(ctx, s) {
         const uv = geo.attributes.uv; for (let j = 0; j < uv.count; j++) uv.setX(j, (i + uv.getX(j)) / N);
         const ph = (k * 2 * Math.PI) / F, mesh = new THREE.Mesh(geo, mats[k]);
         mesh.rotation.y = ph; mesh.position.set(Math.sin(ph) * ap, H / 2, Math.cos(ph) * ap);
-        mesh.castShadow = true; mesh.receiveShadow = true;
+        mesh.castShadow = true; mesh.receiveShadow = !screen; // a lit screen shows no shade on its face
         rod.add(mesh);
       }
       hold.add(rod); rods.push(rod);
     }
-    noAO(hold); halves[side].add(hold);
+    // the AO pass skips turning louvers (thin slats shade each other); a one-face board stays in it, or the shade of
+    // whatever stands behind it would show through its face
+    if (F > 1) noAO(hold);
+    halves[side].add(hold);
     // the catwalk under a board: a ledge and a rail, with gooseneck lamps that throw light up onto the faces
-    if (b.catwalk !== false && !P.truss) {
+    if ((b.catwalk ?? !screen) && !P.truss) {
       const cy = P.y0 - P.frame - 0.004, cw = [P.a - 0.006, P.z + 0.006];
       const bits = [rect(cw[0], cy - 0.007, cw[1], cy), rect(cw[0], cy + 0.022, cw[1], cy + 0.026)];
       for (let x = cw[0]; x <= cw[1] + 1e-6; x += (cw[1] - cw[0]) / Math.max(2, Math.round((cw[1] - cw[0]) / 0.035))) bits.push(rect(x - 0.0015, cy, x + 0.0015, cy + 0.022));
       const rail = card(bits, { color: C.rail, depth: 0.003, curveSegments: 1 }); rail.position.z = zFront + 0.012; st0.add(rail);
     }
-    const nl = b.lamps ?? (P.truss || b.catwalk === false ? 0 : Math.max(2, Math.round(Wb / 0.13)));
+    const nl = b.lamps ?? (P.truss || screen || b.catwalk === false ? 0 : Math.max(2, Math.round(Wb / 0.13)));
     for (let i = 0; i < nl; i++) {
       const x = P.a + (Wb * (i + 0.5)) / nl, y = P.y0 - P.frame - 0.004;
       const arm = card(polyShape([[x - 0.002, y], [x + 0.002, y], [x + 0.002, y + 0.03], [x - 0.002, y + 0.03]]), { color: C.rail, depth: 0.003, curveSegments: 1 });
-      arm.position.z = zFront + 0.02; st0.add(arm);
+      arm.position.z = zFront + 0.02; arm.userData.noAO = true; halves[side].add(arm); // kept out of the AO pass: it would smudge the face
       const hm = new THREE.MeshStandardMaterial({ color: '#4a4540', emissive: new THREE.Color(pal.lamp || '#FFD08A'), emissiveIntensity: 0, roughness: 0.6 });
       const head = card(polyShape([[x - 0.009, y + 0.028], [x + 0.009, y + 0.028], [x + 0.006, y + 0.038], [x - 0.006, y + 0.038]]), { material: hm, edgeMaterial: hm, depth: 0.006, curveSegments: 1 });
       head.position.z = zFront + 0.024; head.userData.noAO = true; halves[side].add(head); lampMats.push(hm);
@@ -193,11 +221,11 @@ export function billboard(ctx, s) {
     }
     // the tap: an unseen card over the face, in front of the louvers
     let proxy = null, ph = null;
-    if (F > 1) {
+    if (F > 1 || waves.length) {
       proxy = new THREE.Mesh(new THREE.BoxGeometry(Wb, H, 0.004), new THREE.MeshBasicMaterial({ visible: false })); proxy.userData.hitProxy = true;
       ph = new THREE.Group(); ph.position.set((P.a + P.z) / 2, P.y0 + H / 2, zFront + 0.006); ph.add(proxy); halves[side].add(ph);
     }
-    boards.push({ P, F, N, rods, start: b.start ?? 0, base: b.start ?? 0, beats: 0, p: 0, anim: null, next: (b.phase ?? bi * 0.6) + (s.every ?? 7), proxy, ph, hover: 0, hold });
+    boards.push({ P, F, N, rods, start: b.start ?? 0, base: b.start ?? 0, beats: 0, p: 0, anim: null, next: (b.phase ?? bi * 0.6) + (s.every ?? 7), proxy, ph, hover: 0, hold, waves });
   });
 
   // a soft contact shade where each half meets its page
@@ -212,13 +240,37 @@ export function billboard(ctx, s) {
   // one lands on the next face (or `steps` faces on). base is the face showing.
   const STAG = s.stagger ?? 0.55, TURN = s.turn ?? 1.8;
   const pose = (bd) => {
+    bd.hold.position.z = 0.003 * bd.hover;
     if (bd.F === 1) return;
     const step = (2 * Math.PI) / bd.F;
     bd.rods.forEach((rod, i) => {
       const q = sstep(0, 1, (bd.p - STAG * (bd.N > 1 ? i / (bd.N - 1) : 0)) / (1 - STAG));
       rod.rotation.y = -(bd.base + q * (bd.anim?.steps ?? 1)) * step;
     });
-    bd.hold.position.z = 0.003 * bd.hover;
+  };
+  // waving: a wave runs dur seconds, swinging `swings` times each way under a soft rise and fall. Under reduced motion
+  // nothing waves on its own and a tap only tips the group to one side (a still raised hand); the next tap sets it back.
+  const wave = (bd) => { for (const w of bd.waves) w.t0 = -2; };
+  const waveTick = (bd, t, loops) => {
+    let busy = false;
+    for (const w of bd.waves) {
+      if (w.t0 === -2) { if (loops) { w.t0 = t; w.held = false; } else { w.t0 = -1; w.held = !w.held; } } // a tap, on the next frame
+      if (loops && w.every > 0 && w.t0 < 0 && t >= w.next) w.t0 = t;
+      if (t + w.every * 2 < w.next) w.next = t + w.every; // the clock went back (a new page)
+      let a = w.held ? w.amp : 0;
+      if (w.t0 >= 0) {
+        const u = (t - w.t0) / w.dur;
+        if (u >= 1 || u < 0 || !loops) { w.t0 = -1; w.next = t + w.every; }
+        else { a = w.amp * Math.sin(Math.PI * u) * Math.sin(2 * Math.PI * w.swings * u); busy = true; }
+      }
+      if (a !== w.a) { w.a = a; w.dirty = true; }
+    }
+    // redraw each face whose waves moved
+    for (const w of bd.waves) if (w.dirty) {
+      const pose = new Map(bd.waves.filter((v) => v.tex === w.tex).map((v) => { v.dirty = false; return [v.it, v.a]; }));
+      w.tex.userData.draw(pose);
+    }
+    return busy;
   };
   const start = (bd, loops = true) => {
     if (bd.F === 1 || bd.anim) return;
@@ -236,21 +288,24 @@ export function billboard(ctx, s) {
   ctx.lamp((k) => {
     for (const [m, l, d] of faceMats) m.emissiveIntensity = d * (1 - k) + l * k; // printed vinyl reads bright by day; lamps light it at night
     for (const m of lampMats) m.emissiveIntensity = 2.2 * k;
-    for (const gs of glows) gs.material.opacity = 0.85 * k;
+    for (const gs of glows) { gs.material.opacity = 0.85 * k; gs.visible = k > 0.01; }
   });
 
-  const playable = boards.filter((bd) => bd.F > 1);
+  const playable = boards.filter((bd) => bd.F > 1); // boards that turn
+  const tappable = boards.filter((bd) => bd.proxy); // a board with a wave waves on a tap; otherwise it turns
+  const tap = (bd) => (bd.waves.length ? wave(bd) : start(bd, loopsNow));
   const targets = []; for (const g of Object.values(halves)) g.traverse((m) => { if (m.isMesh && !m.userData.hitProxy) targets.push(m); });
   return {
     parts, targets,
-    proxies: [...playable.map((bd) => ({ mesh: bd.ph, size: Math.min(bd.P.z - bd.P.a, bd.P.y1 - bd.P.y0) })), ...(tab ? tab.proxies : [])],
-    pokes: playable.map((bd) => ({ targets: [bd.proxy], run() { start(bd, loopsNow); }, hover(on) { bd.hover = on ? 1 : 0; pose(bd); } })),
+    proxies: [...tappable.map((bd) => ({ mesh: bd.ph, size: Math.min(bd.P.z - bd.P.a, bd.P.y1 - bd.P.y0) })), ...(tab ? tab.proxies : [])],
+    pokes: tappable.map((bd) => ({ targets: [bd.proxy], run() { tap(bd); }, hover(on) { bd.hover = on ? 1 : 0; pose(bd); } })),
     drag: tab ? tab.drag : undefined,
     nudge: tab ? () => tab.nudge() : undefined,
-    actions: { turn(i = 0) { const bd = playable[i]; if (bd) start(bd, loopsNow); }, pull(k = 1) { tab?.set(k); } },
+    actions: { turn(i = 0) { const bd = playable[i]; if (bd) start(bd, loopsNow); }, pull(k = 1) { tab?.set(k); }, wave(i = 0) { const bd = boards.filter((b) => b.waves.length)[i]; if (bd) wave(bd); } },
     tick(t, dt, loops) {
       loopsNow = loops;
       let busy = tab ? tab.tick(dt) : false;
+      for (const bd of boards) if (bd.waves.length && waveTick(bd, t, loops)) busy = true;
       if (tab && !tab.pulling && !tabFree && tab.k < 0.01) tabFree = true;
       for (const bd of playable) {
         if (bd.anim) {

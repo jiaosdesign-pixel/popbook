@@ -273,15 +273,30 @@ function shopFacade(pal, s, ly, page, winMats) {
     for (let x = -w + 0.007; x <= w - 0.006; x += bs) bulbs.push([x, top]);
     for (let y = top - bs; y > gh + aw + 0.006; y -= bs) bulbs.push([-w + 0.007, y], [w - 0.007, y]);
   }
+  // option wash (0..1, off): at night the bulbs wash the facade warm from the top down, and the lit glass shades from the
+  // ceiling light down to the sill instead of glowing flat
+  const wash = s.wash || 0;
+  let G = null;
+  const shade = (y0, y1, col) => {
+    if (!wash || !G) return col;
+    const gr = G.createLinearGradient(0, y1, 0, y0); gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(150,96,46,1)'); return gr;
+  };
   const panes = (g, x0, x1, y0, y1, lit) => {
-    g.fillStyle = lit ? '#ffcf8a' : pal.glass; g.fillRect(x0, y0, x1 - x0, y1 - y0);
+    g.fillStyle = lit ? shade(y0, y1, '#ffcf8a') : pal.glass; g.fillRect(x0, y0, x1 - x0, y1 - y0);
     if (!lit) { g.fillStyle = 'rgba(255,214,150,0.22)'; g.fillRect(x0, y0, x1 - x0, (y1 - y0) * 0.55); g.fillStyle = 'rgba(230,236,245,0.14)'; g.beginPath(); g.moveTo(x0 + (x1 - x0) * 0.15, y0); g.lineTo(x0 + (x1 - x0) * 0.4, y0); g.lineTo(x0 + (x1 - x0) * 0.65, y1); g.lineTo(x0 + (x1 - x0) * 0.4, y1); g.fill(); }
     g.fillStyle = lit ? '#000' : pal.trim;
     for (let x = x0 + 0.032; x < x1 - 0.012; x += 0.032) g.fillRect(x - 0.001, y0, 0.002, y1 - y0);
   };
   const draw = (lit) => (g) => {
     const r = rng(Math.round((s.x ?? 0) * 100) + 7);
-    if (lit) { g.fillStyle = '#000'; g.fillRect(-w, 0, 2 * w, hf); }
+    if (lit) {
+      G = g; g.fillStyle = '#000'; g.fillRect(-w, 0, 2 * w, hf);
+      if (wash) { // the brick, lit by the bulbs: strongest under the top row, fading toward the awning
+        const c = new THREE.Color(pal.brick), rgb = `${Math.round(c.r * 255)},${Math.round(c.g * 255)},${Math.round(c.b * 255)}`;
+        const gr = g.createLinearGradient(0, hf, 0, gh); gr.addColorStop(0, `rgba(${rgb},${0.55 * wash})`); gr.addColorStop(0.35, `rgba(${rgb},${0.25 * wash})`); gr.addColorStop(1, `rgba(${rgb},${0.1 * wash})`);
+        g.fillStyle = gr; g.fillRect(-w, gh, 2 * w, hf - gh);
+      }
+    }
     else {
       g.fillStyle = pal.brick; g.fillRect(-w, 0, 2 * w, hf);
       g.strokeStyle = 'rgba(0,0,0,0.05)'; g.lineWidth = 0.0012; // clapboard
@@ -295,7 +310,7 @@ function shopFacade(pal, s, ly, page, winMats) {
     // street level: display windows either side of the door, a kick plate under them
     if (!lit) { g.fillStyle = pal.trim; g.fillRect(-w + 0.008, 0.013, 2 * w - 0.016, 0.012); }
     panes(g, -w + 0.012, -dw / 2 - 0.006, 0.027, gh - 0.008, lit); panes(g, dw / 2 + 0.006, w - 0.012, 0.027, gh - 0.008, lit);
-    g.fillStyle = lit ? '#ffb866' : pal.door; g.fillRect(-dw / 2, 0.013, dw, gh - 0.02);
+    g.fillStyle = lit ? shade(0.013, gh - 0.007, '#ffb866') : pal.door; g.fillRect(-dw / 2, 0.013, dw, gh - 0.02);
     if (!lit) { g.fillStyle = 'rgba(255,214,150,0.35)'; g.fillRect(-dw / 2 + 0.006, 0.05, dw - 0.012, gh - 0.07); }
     // the awning: a striped band with a scalloped edge
     if (!lit) {
@@ -311,7 +326,7 @@ function shopFacade(pal, s, ly, page, winMats) {
       const x = ux(i);
       if (!lit) { g.fillStyle = pal.trim; g.fillRect(x - uw / 2 - 0.005, up0 - 0.005, uw + 0.01, up1 - up0 + 0.01); g.fillRect(x - uw / 2 - 0.008, up1 + 0.005, uw + 0.016, 0.005); }
       if (lit && r() < 0.2) continue;
-      g.fillStyle = lit ? (r() < 0.5 ? '#ffd9a0' : '#ffc27a') : pal.glass; g.fillRect(x - uw / 2, up0, uw, up1 - up0);
+      g.fillStyle = lit ? shade(up0, up1, r() < 0.5 ? '#ffd9a0' : '#ffc27a') : pal.glass; g.fillRect(x - uw / 2, up0, uw, up1 - up0);
       g.fillStyle = lit ? '#000' : pal.trim; g.fillRect(x - 0.001, up0, 0.002, up1 - up0); g.fillRect(x - uw / 2, (up0 + up1) / 2 - 0.001, uw, 0.002);
     }
     for (const [x, y] of bulbs) {

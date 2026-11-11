@@ -4,7 +4,7 @@
 //            band, gold finials, pennants on poles. A pull-tab at the reader's edge raises the portcullis and swings
 //            the gate open on a warm courtyard. Tap the castle: its windows light up one after another, from the
 //            gate upward, and the pennants snap in a gust. On its own: the pennants flutter (each is three paper
-//            segments on hinges). At night the windows are lit and the walls glow softly.
+//            segments on hinges). At night the windows are lit and the walls glow softly, or, with `uplight`, are floodlit from below.
 import * as THREE from 'three';
 import { card, polyShape, printTexture, paperMaterial, aoStrip, glowSprite, glowTexture } from '../engine/paper.js';
 import { sstep } from '../engine/motion.js';
@@ -201,9 +201,34 @@ export function castle(ctx, s) {
   { const kw = P.keepW / 2; for (const y of [P.keepH * 0.2, P.keepH * 0.62]) for (let x = -kw + 0.035; x <= kw - 0.03; x += 0.05) if (Math.abs(x) > 0.06) keepWindows.push([x, y, 0.016, 0.03]); }
 
   const mats = {}, prints = { front: frontPrint, back: backPrint };
+  // Night, option `uplight`: floodlights at the foot of the walls instead of the flat warm glow. The walls' night print
+  // is the day print multiplied by a light map: the wash colour, strongest at the foot and falling off upward (to `fall`)
+  // and toward the outer towers, with a warm core on the keep's centre (and a little round the gate).
+  const U = s.uplight || null;
+  const litPrint = (k) => (g) => {
+    prints[k](g);
+    const [bx0, , bx1, by1] = B[k], c = g.canvas, off = document.createElement('canvas');
+    off.width = c.width; off.height = c.height;
+    const o = off.getContext('2d'); o.setTransform(g.getTransform());
+    o.fillStyle = '#000'; o.fillRect(bx0, 0, bx1 - bx0, by1);
+    const v = o.createLinearGradient(0, 0, 0, by1), fall = U.fall ?? 0.4, wash = new THREE.Color(U.color || '#8C8CF2');
+    const rgba = (col, a) => `rgba(${Math.round(col.r * 255)},${Math.round(col.g * 255)},${Math.round(col.b * 255)},${a})`;
+    v.addColorStop(0, rgba(wash, 1)); v.addColorStop(0.35, rgba(wash, Math.min(1, 0.65 + 0.5 * fall))); v.addColorStop(1, rgba(wash, fall));
+    o.fillStyle = v; o.fillRect(bx0, 0, bx1 - bx0, by1);
+    const h = o.createLinearGradient(bx0, 0, bx1, 0); // the outer towers stand further from the lamps
+    h.addColorStop(0, 'rgba(0,0,0,0.38)'); h.addColorStop(0.3, 'rgba(0,0,0,0)'); h.addColorStop(0.7, 'rgba(0,0,0,0)'); h.addColorStop(1, 'rgba(0,0,0,0.38)');
+    o.fillStyle = h; o.fillRect(bx0, 0, bx1 - bx0, by1);
+    const core = new THREE.Color(U.core || '#FFB89A');
+    const glow = (x, y, r, a) => { const rg = o.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, rgba(core, a)); rg.addColorStop(0.45, rgba(core, a * 0.55)); rg.addColorStop(1, rgba(core, 0)); o.fillStyle = rg; o.fillRect(x - r, y - r, 2 * r, 2 * r); };
+    const cr = U.coreR ?? 0.16;
+    if (k === 'back') { const ct = P.back.reduce((a, t) => (t.h > a.h ? t : a), P.back[0]); glow(ct.x, ct.h * 0.78, cr, 0.95); }
+    else glow(0, P.gateH * 0.9, cr * 0.75, 0.6);
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'multiply'; g.drawImage(off, 0, 0); g.restore();
+  };
   for (const k of ['front', 'back']) {
     const tex = printTexture(B[k], prints[k], 1500, 2048);
-    mats[k] = paperMaterial('#fff', { map: tex, emissiveMap: tex, emissive: pal.castleFlood || '#FFE7D2' });
+    mats[k] = U ? paperMaterial('#fff', { map: tex, emissiveMap: printTexture(B[k], litPrint(k), 900, 1024), emissive: '#ffffff' })
+      : paperMaterial('#fff', { map: tex, emissiveMap: tex, emissive: pal.castleFlood || '#FFE7D2' });
   }
   // window glass: six materials, lit in turn (a tap's cascade runs from the gate upward and outward)
   const N = 6, winMats = Array.from({ length: N }, () => { const m = paperMaterial(C.glass, { noCache: true }); m.emissive.set('#FFCB7A'); return m; });
@@ -333,7 +358,8 @@ export function castle(ctx, s) {
       const e = st.spark < 0 ? 0 : sstep(i * 0.22, i * 0.22 + 0.18, st.spark) * (1 - sstep(i * 0.22 + 1.6, i * 0.22 + 2.4, st.spark));
       winMats[i].emissiveIntensity = Math.max(1.5 * st.lamps, 1.7 * e) + 0.25 * st.hover;
     }
-    mats.front.emissiveIntensity = mats.back.emissiveIntensity = (s.flood ?? 0.3) * st.lamps;
+    mats.front.emissiveIntensity = mats.back.emissiveIntensity = (U ? U.strength ?? 0.8 : s.flood ?? 0.3) * st.lamps;
+    if (U) for (const m of [mats.front, mats.back]) m.color.setScalar(1 - (U.dim ?? 0.35) * st.lamps); // the floodlight, not the moon, colours the walls
   };
   ctx.lamp((v) => { st.lamps = v; place(); });
   const flutter = (t) => {

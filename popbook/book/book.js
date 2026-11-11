@@ -323,6 +323,10 @@ export async function mountBook(container, opts = {}) {
     group.add(corners.group);
     const lamps = [], parts = [], dynamics = [], tickers = [], lightables = [], drags = [], pokes = [], dials = [], nudges = [], proxies = [];
     const ctx = { palette: pal, scene: group, lamp: (fn) => lamps.push(fn), pieces: {}, moonPhase: moonPhase(resolveTime('auto', o.date)), book: bookSpec, sky: skyHooks };
+    if (g.nightDim) { // opt-in: a pale ground printed for day darkens with the lamps at night (day untouched)
+      const gm = new Set(); group.traverse((x) => { for (const mt of [].concat(x.material || [])) if (mt.map && (mt.map === prints.near || mt.map === prints.far)) gm.add(mt); });
+      lamps.push((k) => { for (const mt of gm) mt.color.setScalar(1 - g.nightDim * k); });
+    }
     for (const p of m.pieces) {
       await breath();
       const built = KIT[p.kit].build(ctx, p);
@@ -717,6 +721,7 @@ export async function mountBook(container, opts = {}) {
     front.position.y = 0.0003;
     const back = new THREE.Mesh(faceGeometry(end, Wd, D, R, true).g, paperMaterial('#fff', { map: to.prints[end] }));
     back.position.y = -b - 0.0003;
+    for (const [mesh, w] of [[front, from], [back, to]]) if (w.m.ground?.nightDim) mesh.material.color.setScalar(1 - w.m.ground.nightDim * Lcur.lamps); // the turning leaf matches its dimmed page
     for (const m of [body, front, back]) { m.castShadow = true; m.receiveShadow = true; inner.add(m); }
     inner.position.y = b / 2;
     const pivot = new THREE.Group(); pivot.position.y = -b / 2; pivot.add(inner);
