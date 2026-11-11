@@ -234,7 +234,8 @@ function sailboatCard(pal, c) {
 
 // ---------------------------------------------------------------- v-box: the Golden Gate
 function boxDeclare(s, book) {
-  const { theta, gamma } = vAngles(s, book), H = (s.towerH ?? 0.78) + 0.02, reach = s.reach || [0.86, 0.86];
+  // towers: false is a plain viaduct (deck, railing lamps, piers, cars): only the railing and its lamps stand above the deck
+  const { theta, gamma } = vAngles(s, book), H = (s.towers === false ? (s.deckH ?? 0.22) + 0.011 + 0.03 : (s.towerH ?? 0.78)) + 0.02, reach = s.reach || [0.86, 0.86];
   return { vlayers: [
     { name: 'front elevation', x0: s.x0, theta, gamma, reach, height: [H, H] },
     { name: 'back elevation', x0: s.x0 + (s.depth ?? 0.12), theta, gamma, reach, height: [H, H] },
@@ -243,6 +244,7 @@ function boxDeclare(s, book) {
 export function vBox(ctx, s) {
   const pal = ctx.palette, { theta, gamma } = vAngles(s, ctx.book);
   const T = s.towerX ?? 0.44, H = s.towerH ?? 0.78, h = s.deckH ?? 0.22, Dx = s.depth ?? 0.12;
+  const towers = s.towers !== false, carScale = s.carScale ?? 1; // towers: false skips towers, cables, beacons, anchorages and the floodlight
   const [EL, ER] = s.reach || [0.86, 0.86];
   const td = 0.03, rail = 0.011, ph = 0.03, pw = 0.048, pil = 0.03;
   const widths = [0.046, 0.04, 0.035, 0.031];
@@ -258,6 +260,7 @@ export function vBox(ctx, s) {
     const wb = widths[0] / 2;
     P(T - wb, h - td); P(T - wb, ph); P(T - pw, ph); P(T - pw, 0); P(T + pw, 0); P(T + pw, ph); P(T + wb, ph); P(T + wb, h - td);
     P(E - pil, h - td); P(E - pil, 0); P(E, 0); P(E, top);
+    if (!towers) { P(0, top); return pts; } // a plain pier under the deck, no tower above it
     P(T + widths[0] / 2, top);
     for (let k = 0; k < 4; k++) { P(T + widths[k] / 2, lv[k + 1]); if (k < 3) P(T + widths[k + 1] / 2, lv[k + 1]); }
     P(T + widths[3] / 2 - 0.004, H); P(T + widths[3] / 2 - 0.004, H + 0.008); P(T - widths[3] / 2 + 0.004, H + 0.008); P(T - widths[3] / 2 + 0.004, H);
@@ -292,7 +295,7 @@ export function vBox(ctx, s) {
     g.fillStyle = 'rgba(255,170,120,0.35)'; g.fillRect(box[0], h - td, box[2] - box[0], td + rail);
   }, 300, 512);
   const wallMat = paperMaterial('#fff', { map: face, emissiveMap: glow, emissive: '#e8a27a' });
-  ctx.lamp((k) => { wallMat.emissiveIntensity = 0.3 * k; });
+  ctx.lamp((k) => { wallMat.emissiveIntensity = towers ? 0.3 * k : 0; });
   const threadMat = new THREE.MeshStandardMaterial({ color: pal.cable, roughness: 0.65 });
   const lineMat = new THREE.LineBasicMaterial({ color: pal.cable, transparent: true, opacity: 0.85 });
   const cableY = (x) => { const yMid = top + 0.018, yT = H - 0.004; return yMid + (yT - yMid) * (x / T) ** 2; };
@@ -308,13 +311,15 @@ export function vBox(ctx, s) {
     g.add(m); targets.push(m);
     // main span cable and suspenders, in the card's plane (front face side)
     const zc = isFront ? 0.0035 : -0.0035;
-    const cpts = []; for (let i = 0; i <= 20; i++) { const x = (dir * T * i) / 20; cpts.push(new THREE.Vector3(x, cableY(x), zc)); }
-    const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(cpts), 30, 0.0028, 5, false), threadMat);
-    tube.castShadow = true; g.add(tube);
-    const sp = [];
-    for (let x = 0.016; x < T - 0.02; x += 0.028) sp.push(dir * x, cableY(x), zc, dir * x, top, zc);
-    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3));
-    g.add(new THREE.LineSegments(sg, lineMat));
+    if (towers) {
+      const cpts = []; for (let i = 0; i <= 20; i++) { const x = (dir * T * i) / 20; cpts.push(new THREE.Vector3(x, cableY(x), zc)); }
+      const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(cpts), 30, 0.0028, 5, false), threadMat);
+      tube.castShadow = true; g.add(tube);
+      const sp = [];
+      for (let x = 0.016; x < T - 0.02; x += 0.028) sp.push(dir * x, cableY(x), zc, dir * x, top, zc);
+      const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3));
+      g.add(new THREE.LineSegments(sg, lineMat));
+    }
     if (isFront) {
       for (let x = 0.08; x < E - 0.03; x += 0.16) {
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.0045, 8, 6), lampHeadMat);
@@ -323,9 +328,11 @@ export function vBox(ctx, s) {
         post.position.set(dir * x, top + 0.01, -0.001); g.add(post);
         const gs = glowSprite(pal.lamp, 0.045); gs.position.copy(head.position); g.add(gs); glowsprites.push([gs, 0.85]);
       }
-      const r = new THREE.Mesh(new THREE.SphereGeometry(0.004, 8, 6), redMat);
-      r.position.set(dir * T, H + 0.013, 0); g.add(r);
-      const gs = glowSprite('#ff4a3a', 0.03); gs.position.copy(r.position); g.add(gs); glowsprites.push([gs, 0.6]);
+      if (towers) {
+        const r = new THREE.Mesh(new THREE.SphereGeometry(0.004, 8, 6), redMat);
+        r.position.set(dir * T, H + 0.013, 0); g.add(r);
+        const gs = glowSprite('#ff4a3a', 0.03); gs.position.copy(r.position); g.add(gs); glowsprites.push([gs, 0.6]);
+      }
     }
     return g;
   }
@@ -407,14 +414,14 @@ export function vBox(ctx, s) {
       // facing: along the hinge line, outward or toward the crease depending on the travel direction
       const outward = (X >= 0) === (e.dir > 0);
       car.rotation.y = (page === 'near' ? -theta : theta) + (outward ? 0 : Math.PI);
-      car.scale.set(sx, fold * sy, sx);
+      car.scale.set(carScale * sx, carScale * fold * sy, carScale * sx);
     }
   }
   placeCars(0);
   // tower struts and caps: more platforms at their own heights
   const strutYs = [lv[1] + 0.004, lv[2] + 0.004, lv[3] + 0.004, H + 0.0105];
   const strutMat = paperMaterial(coralDark), capMat = paperMaterial(coral);
-  for (const page of ['near', 'far']) strutYs.forEach((y, i) => {
+  if (towers) for (const page of ['near', 'far']) strutYs.forEach((y, i) => {
     const w = (i === 3 ? widths[3] - 0.006 : widths[Math.min(i + 1, 3)]) * 0.9;
     const m = platform(page, T - w / 2, T + w / 2, i === 3 ? capMat : strutMat);
     parts.push({ obj: m, frame: (sp, mm) => sp.vplatform(page, s.x0, theta, y, gamma, mm) });
@@ -422,7 +429,7 @@ export function vBox(ctx, s) {
 
   // anchorages on the shore and side-span threads from each tower top (slack while the book is closed)
   const anchors = [];
-  for (const page of ['near', 'far']) {
+  if (towers) for (const page of ['near', 'far']) {
     const E = page === 'near' ? ER : EL, sa = E + 0.05;
     const [ax, az] = along(page, sa);
     const blk = paperBox(0.05, 0.03, 0.05, pal.pier, 0.003);

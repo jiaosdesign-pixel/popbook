@@ -261,8 +261,76 @@ function treeProfile(x0, x1, h, seed, o = {}) {
   };
   return { top, crowns };
 }
+// a Main Street shop front (estate option shop / bulbs): display windows and a door at street level under a striped
+// awning, a row of tall windows above, a cornice; bulbs along the top and down both sides. Everything glows at night.
+function shopFacade(pal, s, ly, page, winMats) {
+  const w = s.width / 2, hf = s.facadeH, box = [-w, 0, w, hf];
+  const gh = Math.min(0.12, hf * 0.46), aw = 0.024, dw = 0.036, up0 = gh + aw + 0.022, up1 = hf - 0.03;
+  const n = Math.max(1, Math.floor((2 * w - 0.03) / 0.058)), ux = (i) => -w + (2 * w * (i + 0.5)) / n, uw = Math.min(0.034, (2 * w) / n - 0.024);
+  const bulbs = [];
+  if (s.bulbs) {
+    const bs = 0.0145, top = hf - 0.007;
+    for (let x = -w + 0.007; x <= w - 0.006; x += bs) bulbs.push([x, top]);
+    for (let y = top - bs; y > gh + aw + 0.006; y -= bs) bulbs.push([-w + 0.007, y], [w - 0.007, y]);
+  }
+  const panes = (g, x0, x1, y0, y1, lit) => {
+    g.fillStyle = lit ? '#ffcf8a' : pal.glass; g.fillRect(x0, y0, x1 - x0, y1 - y0);
+    if (!lit) { g.fillStyle = 'rgba(255,214,150,0.22)'; g.fillRect(x0, y0, x1 - x0, (y1 - y0) * 0.55); g.fillStyle = 'rgba(230,236,245,0.14)'; g.beginPath(); g.moveTo(x0 + (x1 - x0) * 0.15, y0); g.lineTo(x0 + (x1 - x0) * 0.4, y0); g.lineTo(x0 + (x1 - x0) * 0.65, y1); g.lineTo(x0 + (x1 - x0) * 0.4, y1); g.fill(); }
+    g.fillStyle = lit ? '#000' : pal.trim;
+    for (let x = x0 + 0.032; x < x1 - 0.012; x += 0.032) g.fillRect(x - 0.001, y0, 0.002, y1 - y0);
+  };
+  const draw = (lit) => (g) => {
+    const r = rng(Math.round((s.x ?? 0) * 100) + 7);
+    if (lit) { g.fillStyle = '#000'; g.fillRect(-w, 0, 2 * w, hf); }
+    else {
+      g.fillStyle = pal.brick; g.fillRect(-w, 0, 2 * w, hf);
+      g.strokeStyle = 'rgba(0,0,0,0.05)'; g.lineWidth = 0.0012; // clapboard
+      for (let y = gh + aw + 0.01; y < hf; y += 0.007) { g.beginPath(); g.moveTo(-w, y); g.lineTo(w, y); g.stroke(); }
+      g.fillStyle = pal.stone; g.fillRect(-w, 0, 2 * w, 0.013);
+      g.fillStyle = pal.trim; g.fillRect(-w, hf - 0.018, 2 * w, 0.01); g.fillRect(-w, hf - 0.005, 2 * w, 0.005); // cornice
+      for (let x = -w + 0.008; x < w; x += 0.012) g.fillRect(x, hf - 0.024, 0.005, 0.006); // dentils
+      g.fillRect(-w, 0.013, 0.008, gh - 0.013); g.fillRect(w - 0.008, 0.013, 0.008, gh - 0.013); // pilasters
+      g.fillRect(-w, gh - 0.004, 2 * w, 0.006);
+    }
+    // street level: display windows either side of the door, a kick plate under them
+    if (!lit) { g.fillStyle = pal.trim; g.fillRect(-w + 0.008, 0.013, 2 * w - 0.016, 0.012); }
+    panes(g, -w + 0.012, -dw / 2 - 0.006, 0.027, gh - 0.008, lit); panes(g, dw / 2 + 0.006, w - 0.012, 0.027, gh - 0.008, lit);
+    g.fillStyle = lit ? '#ffb866' : pal.door; g.fillRect(-dw / 2, 0.013, dw, gh - 0.02);
+    if (!lit) { g.fillStyle = 'rgba(255,214,150,0.35)'; g.fillRect(-dw / 2 + 0.006, 0.05, dw - 0.012, gh - 0.07); }
+    // the awning: a striped band with a scalloped edge
+    if (!lit) {
+      const a0 = gh + 0.002, st = 0.016;
+      for (let x = -w, i = 0; x < w; x += st, i++) {
+        g.fillStyle = i % 2 ? '#FBF6EC' : (pal.awning || '#C9554A');
+        g.beginPath(); g.moveTo(x, a0 + aw); g.lineTo(x + st, a0 + aw); g.lineTo(x + st, a0 + 0.004); g.arc(x + st / 2, a0 + 0.004, st / 2, 0, Math.PI, true); g.closePath(); g.fill();
+      }
+      g.fillStyle = 'rgba(0,0,0,0.12)'; g.fillRect(-w, a0 + aw - 0.003, 2 * w, 0.003);
+    }
+    // upstairs: tall windows with trim
+    for (let i = 0; i < n; i++) {
+      const x = ux(i);
+      if (!lit) { g.fillStyle = pal.trim; g.fillRect(x - uw / 2 - 0.005, up0 - 0.005, uw + 0.01, up1 - up0 + 0.01); g.fillRect(x - uw / 2 - 0.008, up1 + 0.005, uw + 0.016, 0.005); }
+      if (lit && r() < 0.2) continue;
+      g.fillStyle = lit ? (r() < 0.5 ? '#ffd9a0' : '#ffc27a') : pal.glass; g.fillRect(x - uw / 2, up0, uw, up1 - up0);
+      g.fillStyle = lit ? '#000' : pal.trim; g.fillRect(x - 0.001, up0, 0.002, up1 - up0); g.fillRect(x - uw / 2, (up0 + up1) / 2 - 0.001, uw, 0.002);
+    }
+    for (const [x, y] of bulbs) {
+      if (!lit) { g.fillStyle = 'rgba(90,70,50,0.35)'; g.beginPath(); g.arc(x, y, 0.0046, 0, 7); g.fill(); }
+      g.fillStyle = lit ? '#fff2cf' : '#FFF6DF'; g.beginPath(); g.arc(x, y, lit ? 0.0048 : 0.0036, 0, 7); g.fill();
+    }
+  };
+  const tex = printTexture(box, draw(false), 1600, 2048), em = printTexture(box, draw(true), 900, 1024);
+  const mat = paperMaterial('#fff', { map: tex, emissiveMap: em, emissive: '#ffc98a' });
+  winMats.push(mat);
+  const mesh = card(polyShape([[-w, 0], [w, 0], [w, hf], [-w, hf]]), { material: mat, edgeColor: pal.brick, depth: 0.005, uvBox: box, curveSegments: 1 });
+  return [wallPart(new THREE.Group().add(mesh), page, s.x ?? 0, ly.u), aoPart(page, -w, w, ly.u, 0.04, 0.32)];
+}
+
+// Options (all off by default; Filoli uses none): colors {brick, trim, roof, stone, door, glass, awning} override the
+// palette for this instance; shop: true prints a ground-floor display window with a striped awning (a shop front, not
+// a house); bulbs: true prints bulbs along the facade's top and side edges, lit at night.
 export function estate(ctx, s) {
-  const pal = ctx.palette, parts = [], page = s.page || 'far';
+  const pal = s.colors ? { ...ctx.palette, ...s.colors } : ctx.palette, parts = [], page = s.page || 'far';
   const winMats = [];
   for (const ly of s.layers) {
     if (ly.kind === 'trees') {
@@ -301,6 +369,8 @@ export function estate(ctx, s) {
         grp.add(ch, cap);
       }
       parts.push(wallPart(mergeStatic(grp), page, s.x ?? 0, ly.u));
+    } else if (ly.kind === 'facade' && (s.shop || s.bulbs)) {
+      parts.push(...shopFacade(pal, s, ly, page, winMats));
     } else if (ly.kind === 'facade') {
       const w = s.width / 2, hf = s.facadeH;
       const pts = [[-w, 0], [w, 0], [w, hf], [-w, hf]];
@@ -476,6 +546,31 @@ export function makeFrontFigure(pal, height = 0.16) {
   add(capsule(0, 0, 0.03, 0.17, 0.058), c.coat, 0.018, fore);
   add(ellipse(0.034, 0.2, 0.025, 0.028), c.skin, 0.019, fore);
   add(ellipse(0.2, 0.69, 0.012, 0.012), c.coatBack, 0.02); // the brad
+  // optional: a bow headband (figure.bow; figure.bowDot prints dots on it) and a shoulder bag at her side
+  // (figure.bag, figure.bagLight prints a check on it). Both are off unless the palette names them.
+  if (c.bow) {
+    const band = new THREE.Shape(); band.absarc(0, 0.9, 0.09, 0.32, Math.PI - 0.32, false); band.absarc(0, 0.9, 0.077, Math.PI - 0.32, 0.32, true);
+    add(band, c.bow, 0.0098);
+    const dot = c.bowDot;
+    for (const sg of [-1, 1]) {
+      const lobe = new THREE.Shape(); lobe.moveTo(0, 0.99);
+      lobe.quadraticCurveTo(sg * 0.035, 1.055, sg * 0.078, 1.045); lobe.quadraticCurveTo(sg * 0.1, 1.0, sg * 0.082, 0.955); lobe.quadraticCurveTo(sg * 0.04, 0.95, 0, 0.99);
+      add(lobe, c.bow, 0.0102);
+      if (dot) for (const [dx, dy] of [[0.03, 1.012], [0.06, 1.028], [0.07, 0.975], [0.045, 0.975]]) add(ellipse(sg * dx, dy, 0.0075, 0.0075), dot, 0.0106);
+    }
+    add(ellipse(0, 0.99, 0.017, 0.021), c.bow, 0.0108);
+  }
+  if (c.bag) {
+    add(capsule(-0.06, 0.795, -0.128, 0.49, 0.012), c.bag, 0.0165); // the strap over her shoulder
+    const box = [-0.175, 0.37, -0.085, 0.5];
+    const tex = printTexture(box, (q) => {
+      q.fillStyle = c.bag; q.fillRect(box[0], box[1], box[2] - box[0], box[3] - box[1]);
+      q.fillStyle = c.bagLight || '#F1EEE4';
+      for (let i = 0; i < 6; i++) for (let j = 0; j < 9; j++) if ((i + j) % 2) q.fillRect(box[0] + i * 0.015, box[1] + j * 0.0145, 0.015, 0.0145);
+    }, 2000, 512);
+    const bag = card(polyShape([[box[0], box[1]], [box[2], box[1]], [box[2] - 0.004, box[3]], [box[0] + 0.004, box[3]]]), { material: paperMaterial('#fff', { map: tex }), edgeColor: c.bag, depth: 0.004, bevel: 0.001, uvBox: box, curveSegments: 1 });
+    bag.position.z = 0.0175; g.add(bag); layers.push(bag);
+  }
   g.scale.setScalar(height);
   return { group: g, layers, fore };
 }
