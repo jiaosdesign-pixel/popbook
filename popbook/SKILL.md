@@ -3,7 +3,7 @@ name: popbook
 description: Turn a photo or a line about someone's day into a page of a paper pop-up book they can play with, delivered as ONE self-contained HTML file (three.js, no server, no install, works offline). Layers of cut paper fold up from the gutter; the reader taps a piece, drags a pull-tab, turns a sun-and-moon dial between day and night, and something in the scene moves on its own. Use this whenever someone sends a photo, a place, a memory or a one-line diary entry and wants it as a pop-up book, a paper diorama, a "popbook" or a playable keepsake page, or wants to add a page to a popbook they already have, even if they never say "pop-up".
 ---
 
-# popbook
+# Popbook
 
 One page of a pop-up book is one JSON file (a "moment") built from a kit of paper pieces. `scripts/build.mjs` turns one or more moments into one HTML file. The photo is reference only: it never goes into the book.
 

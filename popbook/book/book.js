@@ -1,5 +1,6 @@
 // Living pop-up book. Public API (see STATUS.md for the full list):
-//   mountBook(container, { moment, theme, mode, state, caption, onEnter, label, keysBefore, ... }) ->
+//   mountBook(container, { moment, theme, mode, state, startOpen, caption, onEnter, label, keysBefore, ... }) ->
+//     (startOpen: true shows the book open on its page from the first frame: no cover, no opening animation)
 //     { setTheme(t), setMoment(m, {direction}), setMode(m), setCorners({prev,next}), meta, open(), close(), act(), setProgress(p), destroy() }
 //   themeAt(date) -> 'day' | 'night' (sun up in San Francisco or not)
 // Host pages include the three.js import map. The container sets the size.
@@ -321,7 +322,7 @@ export async function mountBook(container, opts = {}) {
     const side = bookSpec.binding === 'side';
     const corners = makeCorners(book, prints, bookSpec, { layout: side ? 'side' : 'top' });
     group.add(corners.group);
-    const lamps = [], parts = [], dynamics = [], tickers = [], lightables = [], drags = [], pokes = [], dials = [], nudges = [], proxies = [];
+    const lamps = [], parts = [], dynamics = [], tickers = [], dialTicks = [], lightables = [], drags = [], pokes = [], dials = [], nudges = [], proxies = [];
     const ctx = { palette: pal, scene: group, lamp: (fn) => lamps.push(fn), pieces: {}, moonPhase: moonPhase(resolveTime('auto', o.date)), book: bookSpec, sky: skyHooks };
     if (g.nightDim) { // opt-in: a pale ground printed for day darkens with the lamps at night (day untouched)
       const gm = new Set(); group.traverse((x) => { for (const mt of [].concat(x.material || [])) if (mt.map && (mt.map === prints.near || mt.map === prints.far)) gm.add(mt); });
@@ -340,6 +341,7 @@ export async function mountBook(container, opts = {}) {
       }
       if (built.dynamic) dynamics.push(built.dynamic);
       if (built.tick) tickers.push(built.tick);
+      if (built.tick && built.dial) dialTicks.push(built.tick); // ticked through a page turn too, so a peek settles as its page folds
       if (built.setLight) lightables.push(built.setLight);
       for (const d of [].concat(built.drag || [])) drags.push(d);
       for (const pk of built.pokes || []) pokes.push(pk);
@@ -370,7 +372,7 @@ export async function mountBook(container, opts = {}) {
     const tableY = book.bottom - 0.002; // the table touches the cover (the float lifts the book off it)
     shadowPlane.position.y = tableY;
     return {
-      m, pal, group, book, bookSpec, prints, corners, parts, dynamics, tickers, lightables, lamps, drags, dragOf, pokeOf, hoverOf, tapTargets, pickables, dials, side,
+      m, pal, group, book, bookSpec, prints, corners, parts, dynamics, tickers, dialTicks, lightables, lamps, drags, dragOf, pokeOf, hoverOf, tapTargets, pickables, dials, side,
       nudges, proxies, nudgePlan: null, nudgeRounds: 0, LD, LN, pool: lt0.pool ?? 1, poolAt: lt0.poolAt || [-0.05, 0.4, 0.26],
       shadowSoft: side ? { radius: lt0.shadowRadius ?? 14, intensity: lt0.shadowIntensity ?? 0.6, half: 1.35 } : { radius: 6, intensity: 1, half: 1.75 },
       lightYaw: (side ? (m.camera?.lightYaw ?? -14) : (m.camera?.yaw ?? -14)) * deg,
@@ -415,18 +417,38 @@ export async function mountBook(container, opts = {}) {
   const lightAt = (k) => { const D = W?.LD || DAY, N = W?.LN || NIGHT; return k <= 0 ? D : k >= 1 ? N : blendLight(D, N, k); };
   let skyK = theme === 'night' ? 1 : 0, skyHeld = false;
   let Lcur = lightAt(skyK), lightAnim = null;
+  // a peek's lean: the sky k the light shows while a peek has it leaning (null when it shows skyK). A relight or a page
+  // turn that starts mid-peek hands the lean to leanFade, which eases it out across that relight or turn (no freeze, no
+  // snap), and the rest of that peek is muted (peekMuted) so it cannot pull the light back.
+  let leanK = null, peekMuted = false, leanFade = null; // leanFade: { off, t0, dur }, off = shown k - skyK when it began
+  const clamp01 = (x) => Math.max(0, Math.min(1, x));
+  const shownK = (now = performance.now()) => {
+    if (leanK != null) return leanK;
+    if (!leanFade) return skyK;
+    return clamp01(skyK + leanFade.off * (1 - easeInOutQuad(clamp01((now - leanFade.t0) / leanFade.dur))));
+  };
+  function releaseLean(dur, t0 = performance.now()) {
+    const off = shownK(t0) - skyK;
+    if (leanK != null) peekMuted = true;
+    leanK = null;
+    leanFade = Math.abs(off) > 1e-4 ? { off, t0, dur } : null;
+  }
   // what a kit dial may do: preview(k) while the reader turns it, commit(theme) when they let go
   const skyHooks = {
     get k() { return skyK; },
     preview(k) {
       if (lightAnim) { const d = lightAnim.done; lightAnim = null; d(); }
+      leanK = null; leanFade = null;
       skyHeld = true; skyK = Math.max(0, Math.min(1, k)); Lcur = lightAt(skyK); applyLight(Lcur); kick();
     },
     // peek(a): the light leans a (0..1) of the way toward the other theme and back, without changing the theme. The
     // dial's hint after every page turn uses it, so the reader sees that the dial is what turns day into night.
     peek(a) {
-      if (skyHeld || lightAnim) return;
-      Lcur = lightAt(theme === 'night' ? 1 - a : a); applyLight(Lcur); // no kick(): it runs inside the frame loop, and a kick there resets the clock
+      if (a <= 1e-3) peekMuted = false; // that peek is over
+      if (skyHeld || lightAnim || F || peekMuted) return; // a relight or a page turn owns the light
+      const k = theme === 'night' ? 1 - a : a;
+      leanK = a > 1e-4 ? k : null; leanFade = null;
+      Lcur = lightAt(k); applyLight(Lcur); // no kick(): it runs inside the frame loop, and a kick there resets the clock
     },
     commit(name) {
       skyHeld = false;
@@ -448,6 +470,16 @@ export async function mountBook(container, opts = {}) {
       tm.color.copy(FOIL_DAY).lerp(FOIL_GOLD, L.night); tm.emissive.copy(FOIL_NIGHT); tm.emissiveIntensity = 0.95 * L.night; tm.roughness = 0.45 - 0.15 * L.night;
     }
   }
+  // the lamp pool (night): full when the spread lies open, off while the book is shut or a leaf is up (turnUp), and
+  // after a landing or a swap it fades in over POOL_IN ms instead of switching on in one frame (a light fade, so
+  // reduced motion keeps it too)
+  const POOL_IN = 400;
+  let poolT0 = -1e9;
+  const poolLevel = (L, turnUp = 0, now = performance.now()) => {
+    if (!W) return 0.8 * L.lamps;
+    const t = clamp01((now - poolT0) / POOL_IN);
+    return 0.8 * L.lamps * W.pool * (1 - 0.92 * turnUp) * Math.max(0, (W.spread.upright - 0.6) / 0.4) ** 2 * t * t * (3 - 2 * t);
+  };
   let shadowK = 1;
   function applyLight(L) {
     key.position.copy(L.keyDir).multiplyScalar(6);
@@ -456,12 +488,12 @@ export async function mountBook(container, opts = {}) {
     // studio bounce from the camera side
     fill.intensity = 0.4 + 0.5 * L.day + 0.35 * L.night + 1.1 * L.golden;
     fill.color.copy(L.hemiSky).lerp(cWhite, 0.5).lerp(cWarmFill, L.golden * 0.7);
-    warm.intensity = 0.8 * L.lamps * (W?.pool ?? 1) * (W ? Math.max(0, (W.spread.upright - 0.6) / 0.4) ** 2 : 1);
+    warm.intensity = poolLevel(L);
     rim.intensity = L.rimI ?? 0;
     renderer.toneMappingExposure = (L.exposure ?? 1) + 0.32 * L.night + 0.3 * L.twilight + 0.25 * L.golden;
     shadowK = 1 - 0.18 * L.night;
     lightWorld(W, L);
-    if (F) lightWorld(F.to, L);
+    if (F) { lightWorld(F.to, L); F.leaf.light(L.lamps); }
     container.style.setProperty('--book-sky', '#' + L.backdrop.getHexString());
     o.onTint?.(L);
     wantShadow(2);
@@ -477,9 +509,10 @@ export async function mountBook(container, opts = {}) {
     container.dataset.theme = name; container.dataset.phase = name;
     if (lightAnim) { const d = lightAnim.done; lightAnim = null; d(); }
     skyHeld = false;
-    if (!motion || instant || !visible) { skyK = to; Lcur = lightAt(skyK); applyLight(Lcur); wantShadow(3); if (W) snapshotGlimpse(W); kick(); return Promise.resolve(name); }
+    if (!motion || instant || !visible) { leanK = null; leanFade = null; skyK = to; Lcur = lightAt(skyK); applyLight(Lcur); wantShadow(3); if (W) snapshotGlimpse(W); kick(); return Promise.resolve(name); }
     // the time it takes follows how far the sky has to turn (a dial let go halfway relights in half the time)
     const dur = (o.relight ?? 900) * Math.max(0.35, Math.abs(to - skyK));
+    releaseLean(dur); // mid-peek: the lean eases out across the relight instead of snapping back on its first frame
     themePending = new Promise((res) => { lightAnim = { from: skyK, to, t0: performance.now(), dur, done: () => res(name) }; kick(); });
     return themePending;
   }
@@ -588,7 +621,9 @@ export async function mountBook(container, opts = {}) {
   if (o.glimpse) for (const t of ['day', 'night']) if (o.glimpse[t]) new THREE.TextureLoader().load(o.glimpse[t], (tx) => { tx.colorSpace = THREE.SRGBColorSpace; fixedGlimpse[t] = tx; if (W && t === theme) { snapshotGlimpse(W); kick(); } });
   function snapshotGlimpse(w) {
     const gm = w.book.glimpse;
-    if (!gm) return;
+    // not mid-turn: glimpseRender re-poses the world flat, which would undo the turn's pose for one drawn frame (the
+    // window is shut away during a turn anyway; endTurn takes the new page's still)
+    if (!gm || F) return;
     if (o.glimpse) {
       const tx = fixedGlimpse[theme];
       if (tx && gm.material.map !== tx) { gm.material.map = tx; gm.material.toneMapped = false; gm.material.color.set('#ffffff'); gm.material.needsUpdate = true; }
@@ -684,6 +719,7 @@ export async function mountBook(container, opts = {}) {
     worldShadowAndLamp();
     measure(W);
     pose(W, phi);
+    leanK = null; leanFade = null; peekMuted = false;
     Lcur = lightAt(skyK);
     applyLight(Lcur);
     if (size.w > 1) fit();
@@ -721,13 +757,15 @@ export async function mountBook(container, opts = {}) {
     front.position.y = 0.0003;
     const back = new THREE.Mesh(faceGeometry(end, Wd, D, R, true).g, paperMaterial('#fff', { map: to.prints[end] }));
     back.position.y = -b - 0.0003;
-    for (const [mesh, w] of [[front, from], [back, to]]) if (w.m.ground?.nightDim) mesh.material.color.setScalar(1 - w.m.ground.nightDim * Lcur.lamps); // the turning leaf matches its dimmed page
+    const dim = (lamps) => { for (const [mesh, w] of [[front, from], [back, to]]) if (w.m.ground?.nightDim) mesh.material.color.setScalar(1 - w.m.ground.nightDim * lamps); }; // the turning leaf matches its dimmed page
+    dim(Lcur.lamps);
     for (const m of [body, front, back]) { m.castShadow = true; m.receiveShadow = true; inner.add(m); }
     inner.position.y = b / 2;
     const pivot = new THREE.Group(); pivot.position.y = -b / 2; pivot.add(inner);
     return {
       pivot,
       set(th) { pivot.rotation.x = dir === 'next' ? -th : th; },
+      light: dim, // a relight mid-turn keeps the leaf in step with its pages
       dispose() { bodyGeo.dispose(); for (const m of [front, back]) { m.geometry.dispose(); m.material.dispose(); } },
     };
   }
@@ -747,6 +785,7 @@ export async function mountBook(container, opts = {}) {
       poseTurn(0);
       try { renderer.compile(scene, camera); } catch (_) { /* compile is only a warm-up */ }
       F.t0 = performance.now();
+      releaseLean(F.dur, F.t0); // a peek in progress eases back to the theme's light across the turn
       kick();
     });
   }
@@ -777,20 +816,24 @@ export async function mountBook(container, opts = {}) {
     camera.fov = W.m.camera?.fov ?? 32; camera.updateProjectionMatrix();
     warm.color.set(W.pal.lamp || '#ffd08a');
     worldShadowAndLamp();
-    Lcur = lightAt(skyK); applyLight(Lcur);
+    leanK = null; peekMuted = false; // the old page's peek went with it
+    poolT0 = performance.now(); // the new page's lamp pool fades in
     phi = W.REST; pose(W, phi);
+    Lcur = lightAt(shownK()); applyLight(Lcur);
     snapshotGlimpse(W);
     done();
   }
 
   // ---- state + animation
-  const startOpen = o.state === 'open' || still;
+  // o.startOpen (or state 'open'): the book is open on its page from the first frame. No shut cover, no cover hold, no
+  // opening, the open framing from the start, and it stays open when scrolled away (an embed under a caption card)
+  const startOpen = !!o.startOpen || o.state === 'open' || still;
   let phi = 0;
   swapWorld(await buildWorld(moment));
   phi = startOpen ? W.REST : 0;
   applyMechanics(phi);
   let anim = null; // {from,to,t0,dur,ease,done}
-  let visible = true, opened = startOpen, manual = false, turning = false;
+  let visible = true, opened = startOpen, manual = false, turning = false, building = 0;
 
   function endAnim() { if (anim) { const d = anim.done; anim = null; d(); } }
   function animateTo(to, dur, delay = 0, ease = easeInOut) {
@@ -800,7 +843,7 @@ export async function mountBook(container, opts = {}) {
   }
   // first arrival only: the shut book holds a moment so the cover title can be read, then opens.
   // Reduced motion: the cover shows, then the book is simply open (no animation).
-  let firstOpen = true;
+  let firstOpen = !startOpen;
   function open() {
     opened = true;
     const hold = firstOpen ? (o.coverHold ?? 750) : 0; firstOpen = false;
@@ -1124,16 +1167,24 @@ export async function mountBook(container, opts = {}) {
       busy = true;
       if (p >= 1) { endTurn(); turnK = 0; turnUp = 0; }
     }
+    // the light: a relight (lightAnim moves skyK) and a peek's lean easing out (leanFade) share one applyLight
+    let lp = -1;
     if (lightAnim) {
-      const p = Math.max(0, Math.min(1, (now - lightAnim.t0) / lightAnim.dur));
-      skyK = lightAnim.from + (lightAnim.to - lightAnim.from) * easeInOutQuad(p);
-      Lcur = lightAt(skyK);
+      lp = Math.max(0, Math.min(1, (now - lightAnim.t0) / lightAnim.dur));
+      skyK = lightAnim.from + (lightAnim.to - lightAnim.from) * easeInOutQuad(lp);
+    }
+    if (lightAnim || leanFade) {
+      Lcur = lightAt(shownK(now));
       applyLight(Lcur);
-      if (p >= 1) { const d = lightAnim.done; lightAnim = null; d(); wantShadow(3); snapshotGlimpse(W); }
+      if (leanFade && now >= leanFade.t0 + leanFade.dur) leanFade = null;
       busy = true;
     }
+    if (lp >= 1) { const d = lightAnim.done; lightAnim = null; d(); wantShadow(3); snapshotGlimpse(W); }
+    // the folding page's sky dial finishes its peek as the page goes down (after the light: its dial.set would undo it)
+    if (F) for (const tk of F.from.dialTicks) tk(lt, dt, false);
     // the lamp pool's point light hangs where the turning leaf passes; dim it while the leaf is up
-    warm.intensity = 0.8 * Lcur.lamps * W.pool * (1 - 0.92 * turnUp) * Math.max(0, (W.spread.upright - 0.6) / 0.4) ** 2;
+    warm.intensity = poolLevel(Lcur, turnUp, now);
+    if (now - poolT0 < POOL_IN) busy = true;
     // page corners: ease each toward its target curl
     let cornerBusy = false;
     if (!F) {
@@ -1148,7 +1199,7 @@ export async function mountBook(container, opts = {}) {
     }
     const loops = motion && opened && isOpen();
     const handling = !!dragging || !!keyDrag || now < settleUntil;
-    if (loops && W.nudges.length) {
+    if (loops && !building && W.nudges.length) { // no new hints while the next page builds
       const idle = now - lastTouch;
       if (!W.nudgePlan && (W.nudgeRounds === 0 || (W.nudgeRounds === 1 && idle > 45000))) {
         W.nudgePlan = W.nudges.map((fn, i) => ({ t: lt + (W.nudgeRounds ? 0.3 : 1.4) + i * 1.1, fn }));
@@ -1213,7 +1264,7 @@ export async function mountBook(container, opts = {}) {
   // ---- observers: pause everything offscreen and in hidden tabs; with state 'auto', open and close with the viewport
   const ro = new ResizeObserver(resize); ro.observe(container);
   let io = null;
-  const auto = () => o.state === 'auto' && !still && !manual && !turning;
+  const auto = () => o.state === 'auto' && !startOpen && !manual && !turning;
   if (!still) {
     io = new IntersectionObserver((ents) => {
       for (const en of ents) {
@@ -1256,8 +1307,15 @@ export async function mountBook(container, opts = {}) {
   // gutter, 'prev' brings the far page back). Closed, offscreen or reduced motion: the spread is swapped in place.
   let turnQueue = Promise.resolve();
   async function turnTo(src, dir) {
-    const next = await loadMoment(src);
-    const world = await buildWorld(next); // build first, in short tasks, so nothing moves until the spread is ready
+    // the page is about to go: its hints that have not played yet are dropped (a dial peek that starts while the next
+    // page builds would be cut short by the turn); the idle hint 45 s on still comes if the turn fails
+    W.nudgePlan = null; W.nudgeRounds = Math.max(W.nudgeRounds, 1);
+    building++;
+    let next, world;
+    try {
+      next = await loadMoment(src);
+      world = await buildWorld(next); // build first, in short tasks, so nothing moves until the spread is ready
+    } finally { building--; }
     turning = true;
     try {
       endDrag(); endKeyDrag(); setCursor(''); setZone(null); hoverCorner = null; press = null;
@@ -1265,6 +1323,7 @@ export async function mountBook(container, opts = {}) {
         await startTurn(world, dir);
       } else {
         swapWorld(world);
+        poolT0 = performance.now(); // the lamp pool fades in with the new page (a light fade: reduced motion too)
         kick();
       }
       moment = next; setCaption(next); syncKeys();
@@ -1326,7 +1385,7 @@ export async function mountBook(container, opts = {}) {
       out._book = count(W.book.group); out._scene = 0; scene.traverse((x) => { if ((x.isMesh || x.isSprite || x.isPoints || x.isLine) && shown(x)) out._scene += x.geometry?.groups?.length || 1; });
       return out;
     },
-    get debugState() { return { phi, opened, visible, manual, turning, turn: F ? F.dir : null, theme, mode, anim: !!anim, raf: !!raf, motion, dragging: !!dragging, loopClock: lt, frames: frameN, shadowUpdates: shadowN, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, cursor: curKind }; },
+    get debugState() { return { phi, opened, visible, manual, turning, turn: F ? F.dir : null, theme, mode, skyK, shownK: shownK(), pool: warm.intensity, lightNight: Lcur.night, anim: !!anim, raf: !!raf, motion, dragging: !!dragging, loopClock: lt, frames: frameN, shadowUpdates: shadowN, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, cursor: curKind }; },
     // debug: client coords of a piece, for click and drag tests. ref: undefined (first part origin, raised by dy),
     // 'drag' (its draggable), 'poke:N' (its N-th poke target)
     // Touch has no hover, so on request the playable pieces show themselves once: each one's hover state (a tab lifts a

@@ -651,7 +651,7 @@ export function skyDial(ctx, s) {
   proxy.userData.hitProxy = true;
   const proxyHolder = new THREE.Group(); proxyHolder.position.set(0, r * 0.45, (s.behind ?? 0.0125) + 0.012); proxyHolder.add(proxy); holder.add(proxyHolder);
   const dialObj = new THREE.Group(); dialObj.add(holder);
-  let phi = 0, held = false, last = 0, nudge = -1, hover = 0, hoverT = 0, lamps = 0;
+  let phi = 0, held = false, last = 0, nudge = -1, hover = 0, hoverT = 0, lamps = 0, peekDir = 1;
   const set = (a) => { phi = Math.max(0, Math.min(Math.PI, a)); spin.rotation.z = -phi; };
   // the hint, after every page turn: the dial turns about a quarter of the way toward the other half, the page's light
   // leans with it (lamps start to glow by day, the sun shows by night), holds a beat and settles back, in 1.3 s
@@ -664,8 +664,8 @@ export function skyDial(ctx, s) {
   };
   const peek = () => peekAt(nudge);
   const show = () => {
-    const pk = peek(), dir = phi > Math.PI / 2 ? -1 : 1;
-    spin.rotation.z = -(phi + dir * PEEK * Math.PI * pk);
+    const pk = peek(); // the peek keeps the way it set out: a relight mid-peek moves phi across the middle, and the dial must not jump back
+    spin.rotation.z = -(phi + peekDir * PEEK * Math.PI * pk);
     const lift = Math.max(hover, pk);
     spin.position.z = 0.002 * lift; mat.emissiveIntensity = 0.35 * lamps + 0.18 * lift;
   };
@@ -676,14 +676,14 @@ export function skyDial(ctx, s) {
     },
     setLight(L) { lamps = L.lamps; show(); },
     proxies: [{ mesh: proxyHolder, size: r * 2 }],
-    nudge() { if (!held) nudge = 0; },
+    nudge() { if (!held) { nudge = 0; peekDir = phi > Math.PI / 2 ? -1 : 1; } },
     tick(t, dt) {
       const peeking = nudge >= 0;
       const busy = peeking || Math.abs(hoverT - hover) > 1e-3;
       if (peeking) { nudge += dt / PEEK_T; if (nudge > 1) nudge = -1; }
       hover += (hoverT - hover) * Math.min(1, dt * 10);
       // first: relighting resets the dial to the theme (dial.set). Night leans a third as far: day light lifts a dark page fast
-      if (peeking && !held) ctx.sky?.peek?.(PEEK * peek() * (phi > Math.PI / 2 ? 0.3 : 1));
+      if (peeking && !held) ctx.sky?.peek?.(PEEK * peek() * (peekDir < 0 ? 0.3 : 1));
       if (busy) show();
       return busy ? 'fast' : false;
     },

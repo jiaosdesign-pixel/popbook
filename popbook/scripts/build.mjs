@@ -6,6 +6,11 @@
 // by date). The page shows the open book, the caption and the place under it, a day / night switch, and arrows and
 // date tabs when there is more than one page.
 //
+// URL options for the built page: ?theme=day|night picks the theme, ?embed=1 drops the page chrome for an iframe (the
+// host can drive the theme with postMessage), ?open=1 shows the book already open on its page from the first frame (no
+// closed cover, no opening animation; use it when the book sits right above other content), ?page=<n> starts on page n
+// (0 = the oldest; default the newest).
+//
 // How it fits in one file: every ES module is inlined as a data: URL behind one import map, and every relative import
 // is rewritten to a bare name the map resolves ('popbook/engine/sky.js', 'three/addons/...'). Fonts are base64 too.
 import fs from 'node:fs';
@@ -119,7 +124,7 @@ main{min-height:100svh;display:flex;flex-direction:column;align-items:center;pad
     <button class="btn" id="theme" aria-label="Switch to night">Night</button>
     <button class="btn" id="next" aria-label="Next page" hidden>&rarr;</button>
   </div>
-  <p class="foot">${author ? esc(author) + ' &middot; ' : ''}Made with popbook. Play with the paper, and turn the sun dial for night.</p>
+  <p class="foot">${author ? esc(author) + ' &middot; ' : ''}Made with Popbook. Play with the paper, and turn the sun dial for night.</p>
 </main>
 <script type="application/json" id="moments">${JSON.stringify(moments).replace(/</g, '\\u003c')}</script>
 <script type="module">
@@ -132,6 +137,7 @@ const pages = list.filter((m) => { const e = validateMoment(m); if (e.length) { 
 if (bad.length) { const p = document.createElement('pre'); p.className = 'errors'; p.textContent = 'These pages have errors and were skipped:\\n' + bad.join('\\n'); $('book').after(p); }
 let idx = pages.length - 1, turning = false, book;
 const q = new URLSearchParams(location.search);
+{ const n = parseInt(q.get('page'), 10); if (n >= 0 && n < pages.length) idx = n; } // ?page=<n>: start on that page (0 = the oldest)
 if (q.has('embed')) html.classList.add('embed');
 const wanted = q.get('theme') || ${JSON.stringify(theme)};
 let theme = wanted === 'day' || wanted === 'night' ? wanted : (matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'day');
@@ -171,7 +177,7 @@ paint();
 if (pages.length) {
   try {
     book = await mountBook($('book'), {
-      moment: pages[idx], theme, mode: 'detail', caption: false, label: ${JSON.stringify(title)},
+      moment: pages[idx], theme, mode: 'detail', caption: false, label: ${JSON.stringify(title)}, startOpen: q.get('open') === '1',
       coverTitle: ${JSON.stringify(title)}, coverAuthor: ${JSON.stringify(author)},
       onTurn: (dir) => go(idx + (dir === 'next' ? 1 : -1)),
       onThemeChange: (t) => { setTheme(t, true); tellHost(t); }, // the sky dial in the book is a theme switch too

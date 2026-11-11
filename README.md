@@ -1,16 +1,16 @@
-# popbook
+# Popbook
 
 Send a photo or a line. Get a pop-up book page.
 
-popbook is a skill for AI agents. You send your agent a photo from your day (or one line about it), and it builds a page of a paper pop-up book you can play with: layers of cut paper stand up from the gutter, a pull-tab slides, a door swings open, a sun-and-moon dial turns day into night, and something in the scene keeps moving on its own. You get one HTML file. Open it, send it, host it anywhere. No server, no install, no network.
+Popbook is a skill for AI agents. You send your agent a photo from your day (or one line about it), and it builds a page of a paper pop-up book you can play with: layers of cut paper stand up from the gutter, a pull-tab slides, a door swings open, a sun-and-moon dial turns day into night, and something in the scene keeps moving on its own. You get one HTML file. Open it, send it, host it anywhere. No server, no install, no network.
 
 I built it for my own site, where the book holds one moment from my week. This is the same engine, packaged for you.
 
-![A page of popbook, by day and by night](docs/card.png)
+![A Popbook page, by day and by night](docs/card.png)
 
 ## Install
 
-popbook is an [Agent Skill](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview): a folder with a `SKILL.md`.
+Popbook is an [Agent Skill](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview): a folder with a `SKILL.md`.
 
 - **Claude Code:** paste this in Terminal:
 
@@ -19,7 +19,7 @@ popbook is an [Agent Skill](https://docs.claude.com/en/docs/agents-and-tools/age
   ```
 
   Or, from a clone of this repo: `cp -R popbook ~/.claude/skills/` (it becomes `~/.claude/skills/popbook/`).
-- **Claude app:** zip the `popbook/` folder and add it under Settings, Capabilities, Skills.
+- **Claude app:** download [popbook.zip](https://jiao-design.vercel.app/playground/popbook/popbook.zip) (or zip the `popbook/` folder yourself) and add it under Settings, Capabilities, Skills.
 - **Other agents:** point yours at `popbook/SKILL.md`.
 
 You need Node 18 or newer. Python 3 with Pillow reads photos and makes the preview card. Playwright, if you have it, lets the agent check its own work in a headless browser.
@@ -45,7 +45,7 @@ Your agent reads the photo, picks pieces from the kit, folds them into a spread,
 
 ## Credits
 
-Made by Jiao Shi, [jiao-design.vercel.app](https://jiao-design.vercel.app).
+Made by [Jiao Shi](https://www.linkedin.com/in/jiaoshi/). Every book drawn by Claude with Claude Code. More on the [Popbook page](https://jiao-design.vercel.app/playground/popbook/).
 Built on [three.js](https://threejs.org) (MIT). Type: Alegreya Sans by Huerta Tipográfica and Martian Mono by Evil Martians, both SIL Open Font License 1.1.
 
 ## License

@@ -2,16 +2,20 @@
 //   billboard   a V-fold layer carrying one or more boards on posts. Each board is cut into vertical louvers on a
 //               rod, a tri-vision sign: with two or three faces, the louvers turn one after another and the next ad
 //               slides in. Tap a board: it turns to its next face. Pull the tab at the reader's edge: every board
-//               turns with it, let go past half way and they finish the turn. On their own: the boards turn every
-//               few seconds, one a beat after the other (each board's phase); each beat sends a board to its first
-//               face plus the beat count, so after a tap the boards fall back into step. At night gooseneck lamps
-//               on the catwalk light the faces. A board with one face is a plain sign (an overhead road sign on a
-//               truss, a shop sign). The artwork lives in the moment file: each face is a background colour plus
-//               text lines, SVG path data and simple shapes, drawn to a canvas, so the piece itself carries no
-//               picture of its own. A group in the artwork can `wave`: it rocks about a pivot for a moment every few
-//               seconds and when the board is tapped (a figure's hand on a screen ad); a board with a wave answers a
-//               tap with it instead of turning. `screen: true` makes a board a lit screen: neutral light of its own,
-//               no lamps or catwalk unless asked.
+//               turns with it, let go past half way and they finish the turn. `drag: true` puts the drag on the
+//               boards themselves instead: drag across any board and every board with faces turns with the
+//               finger, louver after louver; let go past half way and they finish, short of it they fall back
+//               (the boards are a set: they always show the same face number). On their own: the boards turn every
+//               few seconds (`every`, 0 holds them), one a beat after the other (each board's phase); each beat
+//               sends a board to its first face plus the beat count, so after a tap the boards fall back into step.
+//               At night gooseneck lamps on the catwalk light the faces. A board with one face is a plain sign (an
+//               overhead road sign on a truss, a shop sign). The artwork lives in the moment file: each face is a
+//               background colour plus text lines, SVG path data and simple shapes, drawn to a canvas, so the piece
+//               itself carries no picture of its own. A group in the artwork can move now and then: `wave` rocks it
+//               about a pivot (a figure's hand), `look` shifts it to one side and back (a pair of eyes looking
+//               round), `blink` squashes it shut for a blink. Only the face showing moves, and a tap on its board
+//               runs its moves at once; a board with moves answers a tap with them instead of turning. `screen:
+//               true` makes a board a lit screen: neutral light of its own, no lamps or catwalk unless asked.
 import * as THREE from 'three';
 import { card, polyShape, paperMaterial, aoStrip, glowSprite } from '../engine/paper.js';
 import { sstep } from '../engine/motion.js';
@@ -66,18 +70,27 @@ function billboardDeclare(s, book) {
 //   { path: '<SVG path data>', x, y, scale, rot (deg), color, stroke, lineWidth }
 //   { shape: 'rect' | 'ellipse' | 'circle', x, y, w, h (rect: top-left corner and size; r rounds the corners),
 //     rx, ry (ellipse, centred on x, y), r (circle), rot (deg), color, stroke, lineWidth }
-//   { group: [...items], x, y, scale, rot, wave }
-// wave (a group only): { pivot: [x, y] (group units, default 0, 0), angle (deg each way, 16), swings (2), dur (s, 1.6),
-//   every (s between waves on its own, 6; 0 = only on a tap), phase (s before the first, 2) }. Text may set maxWidth
-//   (view units): a line wider than that is squeezed to fit, so a layout holds whatever the reader's system font is.
+//   { group: [...items], x, y, scale, rot, wave, look, blink }
+// The moves (a group only; times in seconds, lengths in the group's units). Each runs now and then on its own, at
+// `every` seconds give or take a third (so two groups with the same numbers drift apart), first after `phase`:
+//   wave:  { pivot: [x, y] (0, 0), angle (deg each way, 16), swings (2), dur (1.6), every (6; 0 = only on a tap), phase (2) }
+//   look:  { dirs: [[dx, dy], ...] (where it looks: [[-10, 0], [10, 0], [0, -8]]), move (0.22, each way), hold (0.9),
+//            every (5), phase (1.5) }   the group slides to one of dirs, holds, slides back (pupils looking round)
+//   blink: { pivot: [x, y] (0, 0, the line it closes on), dur (0.2), every (4), phase (0.8) }   squashed shut and open
+// Text may set maxWidth (view units): a line wider than that is squeezed to fit, so a layout holds whatever the
+// reader's system font is.
 function drawItems(g, items, pose) {
   for (const it of items || []) {
     g.save();
     g.globalAlpha = it.opacity ?? 1;
     if (it.group) {
       g.translate(it.x ?? 0, it.y ?? 0); if (it.rot) g.rotate((it.rot * Math.PI) / 180); if (it.scale) g.scale(it.scale, it.scale);
-      const a = pose?.get(it);
-      if (a) { const [px, py] = it.wave?.pivot || [0, 0]; g.translate(px, py); g.rotate(a); g.translate(-px, -py); }
+      const q = pose?.get(it);
+      if (q) {
+        if (q.dx || q.dy) g.translate(q.dx, q.dy);
+        if (q.a) { const [px, py] = it.wave?.pivot || [0, 0]; g.translate(px, py); g.rotate(q.a); g.translate(-px, -py); }
+        if (q.sy !== 1) { const [px, py] = it.blink?.pivot || [0, 0]; g.translate(px, py); g.scale(1, q.sy); g.translate(-px, -py); }
+      }
       drawItems(g, it.group, pose);
     } else if (it.text != null) {
       g.fillStyle = it.color || '#111';
@@ -103,9 +116,19 @@ function drawItems(g, items, pose) {
     g.restore();
   }
 }
-// the groups in a face that wave
-function wavesIn(items, out = []) {
-  for (const it of items || []) if (it.group) { if (it.wave) out.push(it); wavesIn(it.group, out); }
+// the groups in a face that move on their own
+function movesIn(items, out = []) {
+  for (const it of items || []) if (it.group) { if (it.wave || it.look || it.blink) out.push(it); movesIn(it.group, out); }
+  return out;
+}
+// a group's moves, as clocks the piece runs: each has a kind, its times and its own seeded jitter
+let seed = 7;
+const rand = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+function movesOf(it, face, tex) {
+  const out = [], mk = (kind, o, every, phase, extra) => out.push({ kind, it, face, tex, every: o.every ?? every, phase: o.phase ?? phase, t0: -1, next: 0, away: true, held: false, ...extra });
+  if (it.wave) { const w = it.wave; mk('wave', w, 6, 2, { amp: ((w.angle ?? 16) * Math.PI) / 180, swings: w.swings ?? 2, dur: w.dur ?? 1.6 }); }
+  if (it.look) { const l = it.look; mk('look', l, 5, 1.5, { dirs: l.dirs || [[-10, 0], [10, 0], [0, -8]], move: l.move ?? 0.22, hold: l.hold ?? 0.9, dir: [0, 0], last: -1 }); }
+  if (it.blink) { const b = it.blink; mk('blink', b, 4, 0.8, { dur: b.dur ?? 0.2 }); }
   return out;
 }
 function faceTexture(face, w, h, px = 2600) {
@@ -130,6 +153,7 @@ function faceTexture(face, w, h, px = 2600) {
 
 // ---------------------------------------------------------------- the piece
 export function billboard(ctx, s) {
+  seed = 7; // the moves' jitter, the same every time the page is built
   const pal = ctx.palette, { theta, gamma } = vAngles(s, ctx.book);
   const frames = layerFrames(s.x0, theta, gamma);
   const D = billboardDeclare(s, ctx.book).vlayers[0], [rL, rR] = D.reach;
@@ -173,13 +197,10 @@ export function billboard(ctx, s) {
       fr.position.z = zFront + 0.002; st0.add(fr);
     }
     const lit = b.lit ?? s.lit ?? 0.9, screen = !!b.screen;
-    const waves = [];
-    const mats = P.faces.map((face) => {
+    const moves = [];
+    const mats = P.faces.map((face, k) => {
       const t = faceTexture(face, Wb, H, b.px ?? 2600);
-      for (const it of wavesIn(face.items)) {
-        const w = it.wave || {};
-        waves.push({ it, tex: t, amp: ((w.angle ?? 16) * Math.PI) / 180, swings: w.swings ?? 2, dur: w.dur ?? 1.6, every: w.every ?? 6, next: w.phase ?? 2, t0: -1, a: 0 });
-      }
+      for (const it of movesIn(face.items)) moves.push(...movesOf(it, k, t));
       // printed vinyl takes the lamps' warm light; a screen gives its own neutral light
       const m = paperMaterial('#fff', { map: t, emissiveMap: t, emissive: screen ? '#ffffff' : '#fff6e6', noCache: true, ...(screen ? { tooth: 0, grain: 0, bump: 0 } : {}) });
       faceMats.push([m, lit, b.dayGlow ?? s.dayGlow ?? 0.12]); return m;
@@ -219,13 +240,13 @@ export function billboard(ctx, s) {
       head.position.z = zFront + 0.024; head.userData.noAO = true; halves[side].add(head); lampMats.push(hm);
       const gs = glowSprite(pal.lamp || '#FFD08A', b.glow ?? 0.07); gs.position.set(x, y + 0.04, zFront + 0.03); halves[side].add(gs); glows.push(gs);
     }
-    // the tap: an unseen card over the face, in front of the louvers
+    // the tap (and, with `drag`, the drag): an unseen card over the face, in front of the louvers
     let proxy = null, ph = null;
-    if (F > 1 || waves.length) {
+    if (F > 1 || moves.length) {
       proxy = new THREE.Mesh(new THREE.BoxGeometry(Wb, H, 0.004), new THREE.MeshBasicMaterial({ visible: false })); proxy.userData.hitProxy = true;
       ph = new THREE.Group(); ph.position.set((P.a + P.z) / 2, P.y0 + H / 2, zFront + 0.006); ph.add(proxy); halves[side].add(ph);
     }
-    boards.push({ P, F, N, rods, start: b.start ?? 0, base: b.start ?? 0, beats: 0, p: 0, anim: null, next: (b.phase ?? bi * 0.6) + (s.every ?? 7), proxy, ph, hover: 0, hold, waves });
+    boards.push({ P, F, N, side, rods, start: b.start ?? 0, base: b.start ?? 0, beats: 0, p: 0, dir: 1, anim: null, peek: -1, next: (b.phase ?? bi * 0.6) + (s.every ?? 7), proxy, ph, hover: 0, hold, moves });
   });
 
   // a soft contact shade where each half meets its page
@@ -236,98 +257,208 @@ export function billboard(ctx, s) {
   }
   mergeStatic(stat.left); mergeStatic(stat.right);
 
-  // turning: p runs 0..1 through one turn; the louvers follow one after another (stagger), eased, and the last
-  // one lands on the next face (or `steps` faces on). base is the face showing.
-  const STAG = s.stagger ?? 0.55, TURN = s.turn ?? 1.8;
+  // turning: p runs 0..1 through one turn, dir says which way (1: the louvers go from the left, -1: from the right);
+  // the louvers follow one after another (stagger), eased, and the last one lands on the next face (or `steps` faces
+  // on). base is the face showing.
+  const STAG = s.stagger ?? 0.55, TURN = s.turn ?? 1.8, PEEK = 0.13;
   const pose = (bd) => {
     bd.hold.position.z = 0.003 * bd.hover;
     if (bd.F === 1) return;
-    const step = (2 * Math.PI) / bd.F;
+    const step = (2 * Math.PI) / bd.F, steps = bd.anim?.steps ?? 1;
     bd.rods.forEach((rod, i) => {
-      const q = sstep(0, 1, (bd.p - STAG * (bd.N > 1 ? i / (bd.N - 1) : 0)) / (1 - STAG));
-      rod.rotation.y = -(bd.base + q * (bd.anim?.steps ?? 1)) * step;
+      const j = bd.dir < 0 ? bd.N - 1 - i : i;
+      const q = sstep(0, 1, (bd.p - STAG * (bd.N > 1 ? j / (bd.N - 1) : 0)) / (1 - STAG));
+      rod.rotation.y = -(bd.base + bd.dir * q * steps) * step;
     });
   };
-  // waving: a wave runs dur seconds, swinging `swings` times each way under a soft rise and fall. Under reduced motion
-  // nothing waves on its own and a tap only tips the group to one side (a still raised hand); the next tap sets it back.
-  const wave = (bd) => { for (const w of bd.waves) w.t0 = -2; };
-  const waveTick = (bd, t, loops) => {
+  const land = (bd) => { bd.base = (((bd.base + bd.dir * (bd.anim?.steps ?? 1)) % bd.F) + bd.F) % bd.F; };
+
+  // the moves in the artwork: only the face showing moves (none while its board turns); a face that comes into view
+  // starts its clocks afresh. Under reduced motion nothing moves on its own and a tap only sets a still pose (a wave
+  // tips the group to one side, a look holds its first direction); the next tap sets it back.
+  const REST = { a: 0, dx: 0, dy: 0, sy: 1 };
+  const react = (bd) => { const k = showing(bd); let n = 0; for (const m of bd.moves) if (m.face === k) { m.t0 = -2; n++; } return n; };
+  const showing = (bd) => (bd.anim || bd.p > 0 || bd.peek >= 0 || (drag && drag.active) ? -1 : bd.base);
+  const value = (m, t) => {
+    const u = t - m.t0;
+    if (m.kind === 'wave') { const x = u / m.dur; return x >= 1 ? null : { a: m.amp * Math.sin(Math.PI * x) * Math.sin(2 * Math.PI * m.swings * x) }; }
+    if (m.kind === 'blink') { const x = u / m.dur; return x >= 1 ? null : { sy: 1 - 0.9 * Math.sin(Math.PI * x) }; }
+    const all = 2 * m.move + m.hold; if (u >= all) return null;
+    const k = u < m.move ? sstep(0, 1, u / m.move) : u < m.move + m.hold ? 1 : 1 - sstep(0, 1, (u - m.move - m.hold) / m.move);
+    return { dx: m.dir[0] * k, dy: m.dir[1] * k };
+  };
+  const heldValue = (m) => (m.kind === 'wave' ? { a: m.amp } : m.kind === 'look' ? { dx: m.dirs[0][0], dy: m.dirs[0][1] } : null);
+  const fire = (m, t) => {
+    m.t0 = t;
+    if (m.kind === 'look') { let i = Math.floor(rand() * m.dirs.length); if (i === m.last && m.dirs.length > 1) i = (i + 1) % m.dirs.length; m.last = i; m.dir = m.dirs[i]; }
+  };
+  const later = (m, t) => t + m.every * (0.7 + 0.6 * rand());
+  const movesTick = (bd, t, loops) => {
     let busy = false;
-    for (const w of bd.waves) {
-      if (w.t0 === -2) { if (loops) { w.t0 = t; w.held = false; } else { w.t0 = -1; w.held = !w.held; } } // a tap, on the next frame
-      if (loops && w.every > 0 && w.t0 < 0 && t >= w.next) w.t0 = t;
-      if (t + w.every * 2 < w.next) w.next = t + w.every; // the clock went back (a new page)
-      let a = w.held ? w.amp : 0;
-      if (w.t0 >= 0) {
-        const u = (t - w.t0) / w.dur;
-        if (u >= 1 || u < 0 || !loops) { w.t0 = -1; w.next = t + w.every; }
-        else { a = w.amp * Math.sin(Math.PI * u) * Math.sin(2 * Math.PI * w.swings * u); busy = true; }
+    const k = showing(bd), poses = new Map(), dirty = new Set();
+    for (const m of bd.moves) {
+      let v = null;
+      if (m.face !== k) { // out of sight: back to rest, clocks restart when it shows again
+        if (!m.away) { m.away = true; m.t0 = -1; m.held = false; dirty.add(m.tex); }
+      } else {
+        if (m.away) { m.away = false; m.next = t + m.phase * (0.8 + 0.4 * rand()); }
+        if (m.t0 === -2) { if (loops) { fire(m, t); m.held = false; } else { m.t0 = -1; m.held = !m.held; } } // a tap, on the next frame
+        if (loops && m.every > 0 && m.t0 < 0 && t >= m.next) fire(m, t);
+        if (t + m.every * 2 < m.next) m.next = later(m, t); // the clock went back (a new page)
+        if (m.t0 >= 0) {
+          v = loops && t >= m.t0 ? value(m, t) : null;
+          if (!v) { m.t0 = -1; m.next = later(m, t); } else busy = true;
+        }
+        if (!v && m.held) v = heldValue(m);
       }
-      if (a !== w.a) { w.a = a; w.dirty = true; }
+      const q = poses.get(m.it) || { ...REST };
+      if (v) Object.assign(q, v);
+      poses.set(m.it, q);
+      m.pose = m.pose || { ...REST };
+      if (q.a !== m.pose.a || q.dx !== m.pose.dx || q.dy !== m.pose.dy || q.sy !== m.pose.sy) dirty.add(m.tex);
     }
-    // redraw each face whose waves moved
-    for (const w of bd.waves) if (w.dirty) {
-      const pose = new Map(bd.waves.filter((v) => v.tex === w.tex).map((v) => { v.dirty = false; return [v.it, v.a]; }));
-      w.tex.userData.draw(pose);
-    }
-    return busy;
+    // keep what each group was drawn with, and redraw each face whose groups moved
+    for (const m of bd.moves) m.pose = { ...poses.get(m.it) };
+    for (const tex of dirty) tex.userData.draw(new Map(bd.moves.filter((m) => m.tex === tex).map((m) => [m.it, poses.get(m.it)])));
+    return busy || dirty.size > 0;
   };
   const start = (bd, loops = true) => {
     if (bd.F === 1 || bd.anim) return;
     if (!loops) { bd.base = (bd.base + 1) % bd.F; bd.p = 0; pose(bd); return; }
-    bd.anim = { from: bd.p, to: 1 };
+    bd.dir = 1; bd.anim = { from: bd.p, to: 1 };
   };
   boards.forEach(pose);
   let loopsNow = true, tabFree = true;
-  const tab = s.tab ? makePullTab(ctx, { ...s.tab, color: s.tab.color || pal.bridge || '#A44732', onBegin() { tabFree = true; }, onEnd() {
+  const playable = boards.filter((bd) => bd.F > 1); // boards that turn
+  const tappable = boards.filter((bd) => bd.proxy); // a board with moves runs them on a tap; otherwise it turns
+
+  // the drag on the boards (`drag: true`): every board with faces turns with the finger. The finger is read on one
+  // upright plane through the crease, square to the reader (between the two halves of the V), so a stroke across a
+  // board on either half reads the same way; a full turn is a stroke across about `dragSpan` (0.7) of the board.
+  let drag = null;
+  const extras = [];
+  if (s.drag && playable.length) {
+    const plane = new THREE.Group(), X = new THREE.Vector3(), Y = new THREE.Vector3(), Z = new THREE.Vector3(), O = new THREE.Vector3();
+    const lx = new THREE.Vector3(), rx = new THREE.Vector3();
+    let cos = { left: 0.8, right: 0.8 };
+    extras.push({ obj: plane, noFit: true, frame: (sp, m) => {
+      const f = frames(sp);
+      lx.setFromMatrixColumn(f.left, 0).normalize(); rx.setFromMatrixColumn(f.right, 0).normalize();
+      X.copy(lx).add(rx).normalize(); Y.setFromMatrixColumn(f.right, 1); Y.addScaledVector(X, -Y.dot(X)).normalize(); Z.crossVectors(X, Y);
+      O.setFromMatrixPosition(f.right);
+      cos = { left: Math.max(0.2, lx.dot(X)), right: Math.max(0.2, rx.dot(X)) };
+      return m.makeBasis(X, Y, Z).setPosition(O);
+    } });
+    // the grip the keys move (and the engine's handle for this drag): it follows the finger and settles back
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.002, 0.002, 0.002), new THREE.MeshBasicMaterial({ visible: false })); grip.userData.hitProxy = true;
+    plane.add(grip);
+    const home = playable[0], homeX = () => ((home.P.a + home.P.z) / 2) * cos[home.side], homeY = (home.P.y0 + home.P.y1) / 2;
+    grip.position.set(homeX(), homeY, 0);
+    const SPAN = s.dragSpan ?? 0.7;
+    const g = { on: false, grab: 0, want: 0, s: 0, span: 0.3, bd: null, far: 0, hover: 0 };
+    const boardAt = (x) => { // the board under a point of the plane (front-view x worked out from either half)
+      let best = null, bd0 = 1e9;
+      for (const bd of tappable) { const fx = x / cos[bd.side], d = Math.max(bd.P.a - fx, 0, fx - bd.P.z); if (d < bd0) { bd0 = d; best = bd; } }
+      return best;
+    };
+    drag = {
+      targets: [grip, ...tappable.map((bd) => bd.proxy)], obj: plane, axis: 2, local: true,
+      hover(on) { g.hover = on ? 1 : 0; for (const bd of boards) { bd.hover = g.hover; pose(bd); } },
+      begin(p) {
+        // a board still finishing a turn lands first, so the stroke starts from the face it shows
+        for (const bd of playable) { if (bd.anim) { if (bd.anim.to >= 1) land(bd); bd.anim = null; } bd.p = 0; bd.peek = -1; }
+        g.on = true; g.grab = p.x; g.want = 0; g.s = 0; g.far = 0; g.bd = boardAt(p.x);
+        g.span = SPAN * (g.bd.P.z - g.bd.P.a) * cos[g.bd.side];
+      },
+      move(p) {
+        const d = p.x - g.grab; g.far = Math.max(g.far, Math.abs(d));
+        g.want = Math.max(-0.999, Math.min(0.999, d / g.span));
+        grip.position.x = homeX() + Math.max(-1, Math.min(1, g.want)) * g.span;
+      },
+      end() {
+        g.on = false;
+        // a press that never moved is a tap on that board
+        if (g.far < 0.006 && Math.abs(g.s) < 0.02) { for (const bd of playable) bd.p = 0; tap(g.bd); return; }
+        // let go past half way and the boards finish the turn; short of it they fall back
+        for (const bd of playable) bd.anim = { from: bd.p, to: bd.p > 0.5 ? 1 : 0 };
+      },
+      get active() { return g.on; },
+    };
+    // the hint: the louvers lean a little and settle (after the book opens, and on a tap on a face with no moves)
+    drag.peek = (bd) => { if (!g.on && !bd.anim && !bd.p) bd.peek = 0; };
+    drag.tick = (dt) => {
+      if (!g.on) { grip.position.x += (homeX() - grip.position.x) * Math.min(1, dt * 8); return false; }
+      g.s += (g.want - g.s) * Math.min(1, dt * 16);
+      for (const bd of playable) { if (Math.abs(g.s) > 1e-3) bd.dir = Math.sign(g.s); bd.p = Math.abs(g.s); }
+      return true;
+    };
+  }
+  const tab = !drag && s.tab ? makePullTab(ctx, { ...s.tab, color: s.tab.color || pal.bridge || '#A44732', onBegin() { tabFree = true; }, onEnd() {
     // let go past half way and the boards finish the turn; short of it they fall back
     for (const bd of boards) if (bd.F > 1 && !bd.anim) bd.anim = { from: bd.p, to: bd.p > 0.45 ? 1 : 0 };
     tabFree = false;
   } }) : null;
   if (tab) parts.push(tab.part);
+  parts.push(...extras);
   ctx.lamp((k) => {
     for (const [m, l, d] of faceMats) m.emissiveIntensity = d * (1 - k) + l * k; // printed vinyl reads bright by day; lamps light it at night
     for (const m of lampMats) m.emissiveIntensity = 2.2 * k;
     for (const gs of glows) { gs.material.opacity = 0.85 * k; gs.visible = k > 0.01; }
   });
 
-  const playable = boards.filter((bd) => bd.F > 1); // boards that turn
-  const tappable = boards.filter((bd) => bd.proxy); // a board with a wave waves on a tap; otherwise it turns
-  const tap = (bd) => (bd.waves.length ? wave(bd) : start(bd, loopsNow));
+  // a tap: the face showing runs its moves; with nothing to move it turns (or, with the drag, leans as a hint)
+  function tap(bd) {
+    if (react(bd)) return;
+    if (drag) { for (const b of playable) drag.peek(b); return; }
+    start(bd, loopsNow);
+  }
   const targets = []; for (const g of Object.values(halves)) g.traverse((m) => { if (m.isMesh && !m.userData.hitProxy) targets.push(m); });
+  const flip = () => { for (const bd of playable) if (!bd.anim) { bd.dir = 1; bd.anim = { from: bd.p, to: 1 }; } };
   return {
     parts, targets,
     proxies: [...tappable.map((bd) => ({ mesh: bd.ph, size: Math.min(bd.P.z - bd.P.a, bd.P.y1 - bd.P.y0) })), ...(tab ? tab.proxies : [])],
-    pokes: tappable.map((bd) => ({ targets: [bd.proxy], run() { tap(bd); }, hover(on) { bd.hover = on ? 1 : 0; pose(bd); } })),
-    drag: tab ? tab.drag : undefined,
-    nudge: tab ? () => tab.nudge() : undefined,
-    actions: { turn(i = 0) { const bd = playable[i]; if (bd) start(bd, loopsNow); }, pull(k = 1) { tab?.set(k); }, wave(i = 0) { const bd = boards.filter((b) => b.waves.length)[i]; if (bd) wave(bd); } },
+    // with the drag, the pointer's taps arrive through the drag (a press that never moved); this poke is the keys' Enter
+    pokes: drag
+      ? [{ targets: tappable.map((bd) => bd.proxy), run() { for (const bd of tappable) tap(bd); }, hover: drag.hover }]
+      : tappable.map((bd) => ({ targets: [bd.proxy], run() { tap(bd); }, hover(on) { bd.hover = on ? 1 : 0; pose(bd); } })),
+    drag: drag || (tab ? tab.drag : undefined),
+    nudge: drag ? () => { if (loopsNow) for (const bd of playable) drag.peek(bd); } : tab ? () => tab.nudge() : undefined,
+    actions: {
+      turn(i = 0) { const bd = playable[i]; if (bd) start(bd, loopsNow); }, flip, pull(k = 1) { tab?.set(k); },
+      react(i = 0) { const bd = tappable[i]; if (bd) react(bd); }, wave(i = 0) { const bd = boards.filter((b) => b.moves.some((m) => m.kind === 'wave'))[i]; if (bd) react(bd); },
+    },
     tick(t, dt, loops) {
       loopsNow = loops;
       let busy = tab ? tab.tick(dt) : false;
-      for (const bd of boards) if (bd.waves.length && waveTick(bd, t, loops)) busy = true;
+      if (drag && drag.tick(dt)) busy = true;
       if (tab && !tab.pulling && !tabFree && tab.k < 0.01) tabFree = true;
       for (const bd of playable) {
-        if (bd.anim) {
+        if (drag?.active) { /* the finger has it */ }
+        else if (bd.anim) {
           const dir = Math.sign(bd.anim.to - bd.p) || 1;
           bd.p = loops ? bd.p + (dir * dt) / TURN : bd.anim.to;
           if ((dir > 0 && bd.p >= bd.anim.to) || (dir < 0 && bd.p <= bd.anim.to)) {
-            if (bd.anim.to >= 1) bd.base = (bd.base + (bd.anim.steps ?? 1)) % bd.F;
+            if (bd.anim.to >= 1) land(bd);
             bd.p = 0; bd.anim = null;
           }
           busy = true;
-        } else if (tab && (tab.pulling || (tabFree && tab.k > 0))) { bd.p = Math.min(0.999, tab.k); busy = true; }
+        } else if (bd.peek >= 0) {
+          bd.peek += dt / 1.2;
+          if (bd.peek >= 1 || !loops) { bd.peek = -1; bd.p = 0; } else bd.p = PEEK * Math.sin(Math.PI * bd.peek) ** 2;
+          bd.dir = 1; busy = true;
+        } else if (tab && (tab.pulling || (tabFree && tab.k > 0))) { bd.dir = 1; bd.p = Math.min(0.999, tab.k); busy = true; }
         else if (bd.p) { bd.p = 0; busy = true; }
         // on its own: each beat sends a board to (its first face + beats), so boards that a tap or a pull put out of
         // step fall back into their pattern (two boards never show the same ad for long)
-        if (loops && s.every !== 0 && !bd.anim && !(tab && tab.pulling) && t >= bd.next) {
+        if (loops && s.every !== 0 && !bd.anim && !(tab && tab.pulling) && !drag?.active && t >= bd.next) {
           bd.beats++; bd.next = t + (s.every ?? 7);
           const steps = (((bd.start + bd.beats - bd.base) % bd.F) + bd.F) % bd.F;
-          if (steps) bd.anim = { from: bd.p, to: 1, steps };
+          if (steps) { bd.dir = 1; bd.anim = { from: bd.p, to: 1, steps }; }
         }
         else if (t + (s.every ?? 7) * 2 < bd.next) bd.next = t + (s.every ?? 7); // the clock went back (a new page): keep the beat
         pose(bd);
       }
+      for (const bd of boards) if (bd.moves.length && movesTick(bd, t, loops)) busy = true;
       return busy ? 'fast' : false;
     },
     mount: { layers: [{ x0: s.x0, frames }], frames, x0: s.x0, theta, gamma },
