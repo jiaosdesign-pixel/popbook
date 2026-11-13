@@ -2,13 +2,15 @@
 //   billboard   a V-fold layer carrying one or more boards on posts. Each board is cut into vertical louvers on a
 //               rod, a tri-vision sign: with two or three faces, the louvers turn one after another and the next ad
 //               slides in. Tap a board: it turns to its next face. Pull the tab at the reader's edge: every board
-//               turns with it, let go past half way and they finish the turn. `drag: true` puts the drag on the
+//               turns with it, let go past half way and they finish the turn; the tab springs back, so each pull is
+//               one turn. `drag: true` puts the drag on the
 //               boards themselves instead: drag across any board and every board with faces turns with the
 //               finger, louver after louver; let go past half way and they finish, short of it they fall back
 //               (the boards are a set: they always show the same face number). On their own: the boards turn every
 //               few seconds (`every`, 0 holds them), one a beat after the other (each board's phase); each beat
 //               sends a board to its first face plus the beat count, so after a tap the boards fall back into step.
-//               At night gooseneck lamps on the catwalk light the faces. A board with one face is a plain sign (an
+//               At night gooseneck lamps on the catwalk light the faces, or (`topLamps: n`) spotlights on arms over
+//               the top edge throw pools of light down them. A board with one face is a plain sign (an
 //               overhead road sign on a truss, a shop sign). The artwork lives in the moment file: each face is a
 //               background colour plus text lines, SVG path data and simple shapes, drawn to a canvas, so the piece
 //               itself carries no picture of its own. A group in the artwork can move now and then: `wave` rocks it
@@ -151,6 +153,23 @@ function faceTexture(face, w, h, px = 2600) {
   return t;
 }
 
+// a spotlight's pool on a face: brightest just under the lamp, widening and fading down the board (shared)
+let spotTex = null;
+function spotTexture() {
+  if (spotTex) return spotTex;
+  const n = 128, c = document.createElement('canvas'); c.width = c.height = n;
+  const g = c.getContext('2d'), img = g.createImageData(n, n);
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const v = j / (n - 1), x = Math.abs(i / (n - 1) - 0.5) * 2, half = 0.35 + 0.6 * v; // the cone widens downward
+    const across = Math.max(0, 1 - (x / half) ** 2) ** 1.5, down = (1 - v) ** 1.4 * Math.min(1, v * 14);
+    const a = Math.round(255 * across * down), o = (j * n + i) * 4;
+    img.data[o] = img.data[o + 1] = img.data[o + 2] = 255; img.data[o + 3] = a;
+  }
+  g.putImageData(img, 0, 0);
+  spotTex = new THREE.CanvasTexture(c); spotTex.colorSpace = THREE.SRGBColorSpace; spotTex.userData.shared = true;
+  return spotTex;
+}
+
 // ---------------------------------------------------------------- the piece
 export function billboard(ctx, s) {
   seed = 7; // the moves' jitter, the same every time the page is built
@@ -168,7 +187,7 @@ export function billboard(ctx, s) {
   stat.left.add(card(rect(-rL, 0, 0, 0.012), { color: C.base, depth: 0.004, curveSegments: 1 }));
   stat.right.add(card(rect(0, 0, rR, 0.012), { color: C.base, depth: 0.004, curveSegments: 1 }));
 
-  const boards = [], lampMats = [], glows = [], faceMats = [];
+  const boards = [], lampMats = [], glows = [], faceMats = [], pools = [];
   const zFront = s.z ?? 0.014;
   (s.boards || []).forEach((b, bi) => {
     const P = boardPlan(b), side = P.sg < 0 ? 'left' : 'right', st0 = stat[side], H = P.y1 - P.y0, Wb = P.z - P.a;
@@ -239,6 +258,25 @@ export function billboard(ctx, s) {
       const head = card(polyShape([[x - 0.009, y + 0.028], [x + 0.009, y + 0.028], [x + 0.006, y + 0.038], [x - 0.006, y + 0.038]]), { material: hm, edgeMaterial: hm, depth: 0.006, curveSegments: 1 });
       head.position.z = zFront + 0.024; head.userData.noAO = true; halves[side].add(head); lampMats.push(hm);
       const gs = glowSprite(pal.lamp || '#FFD08A', b.glow ?? 0.07); gs.position.set(x, y + 0.04, zFront + 0.03); halves[side].add(gs); glows.push(gs);
+    }
+    // spotlights on the top edge (`topLamps: n`): an arm reaching forward over the face, a lamp head tipped down at
+    // it, and at night a pool of light falling down the face from each head (`pool`, its strength, 0.5)
+    const nt = b.topLamps ?? 0, yT = P.y1 + P.frame;
+    for (let i = 0; i < nt; i++) {
+      const x = P.a + (Wb * (i + 0.5)) / nt, reachZ = 0.034;
+      const am = new THREE.MeshStandardMaterial({ color: C.rail, roughness: 0.7 });
+      const stem = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.016, 0.003), am); stem.position.set(x, yT + 0.008, zFront + 0.003);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.003, reachZ), am); arm.position.set(x, yT + 0.016, zFront + 0.003 + reachZ / 2);
+      const hm = new THREE.MeshStandardMaterial({ color: '#4a4540', emissive: new THREE.Color(pal.lamp || '#FFD08A'), emissiveIntensity: 0, roughness: 0.6 });
+      const head = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.009, 0.014, 16, 1), hm);
+      head.position.set(x, yT + 0.011, zFront + reachZ); head.rotation.x = -0.55; // the open end tipped down and back at the face
+      for (const m of [stem, arm, head]) { m.castShadow = true; m.userData.noAO = true; halves[side].add(m); }
+      lampMats.push(hm);
+      const gs = glowSprite(pal.lamp || '#FFD08A', b.glow ?? 0.05); gs.position.set(x, yT + 0.004, zFront + reachZ + 0.004); halves[side].add(gs); glows.push(gs);
+      const pw2 = Math.min(Wb / nt * 1.5, H * 1.3), ph2 = H * 1.02;
+      const pool = new THREE.Mesh(new THREE.PlaneGeometry(pw2, ph2), new THREE.MeshBasicMaterial({ map: spotTexture(), color: new THREE.Color(pal.lamp || '#FFD08A'), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+      pool.position.set(x, P.y1 - ph2 / 2, zFront + 0.0026); pool.renderOrder = 3; pool.userData.noAO = true; pool.raycast = () => {};
+      halves[side].add(pool); pools.push([pool, b.pool ?? 0.5]);
     }
     // the tap (and, with `drag`, the drag): an unseen card over the face, in front of the louvers
     let proxy = null, ph = null;
@@ -396,26 +434,20 @@ export function billboard(ctx, s) {
   }
   // a board still turning when a new stroke or pull starts lands where it is nearer, so the stroke starts from a face
   function settle() { for (const bd of playable) { if (bd.anim && bd.p > 0.5 && bd.anim.to >= 1) land(bd); bd.anim = null; bd.p = 0; bd.peek = -1; } }
-  // the pull-tab. Without `drag` it springs back and every board turns while it is out. With `drag` it is the set's
-  // switch and stays where it is left: in for the first face, out for the second (a two-face set), so pulling it out
-  // turns the boards on and pushing it in turns them back; it follows the boards when a stroke on a board or a key
-  // turns them. tabAt is where the piece last put it (a nudge shows as tab.k moving away from it).
-  const setTab = !!(drag && s.tab);
-  let tabAt = 0;
-  const odd = () => playable[0].base % 2 === 1; // the set shows its second face: the tab sits out
-  const tab = s.tab ? makePullTab(ctx, { ...s.tab, color: s.tab.color || pal.bridge || '#A44732', ...(setTab ? { springBack: false } : {}), onBegin() { tabFree = true; if (setTab) settle(); }, onEnd() {
-    // let go past half way and the boards finish the turn; short of it they fall back
-    if (setTab) { tabAt = tab.k; for (const bd of playable) bd.anim = { from: bd.p, to: bd.p > 0.5 ? 1 : 0 }; return; }
-    for (const bd of boards) if (bd.F > 1 && !bd.anim) bd.anim = { from: bd.p, to: bd.p > 0.45 ? 1 : 0 };
+  // the pull-tab: it springs back, and every board turns on to its next face while it is out, so each pull is one
+  // turn (a two-face set: pull, the second pair; pull again, the first). Let go past half way and the boards finish
+  // the turn; short of it they fall back. Its hint wiggle only leans the louvers a little.
+  const tab = s.tab ? makePullTab(ctx, { ...s.tab, color: s.tab.color || pal.bridge || '#A44732', onBegin() { tabFree = true; settle(); }, onEnd() {
+    for (const bd of playable) bd.anim = { from: bd.p, to: bd.p > 0.45 ? 1 : 0 };
     tabFree = false;
   } }) : null;
-  if (setTab) tab.set(tabAt = odd() ? 1 : 0);
   if (tab) parts.push(tab.part);
   parts.push(...extras);
   ctx.lamp((k) => {
     for (const [m, l, d] of faceMats) m.emissiveIntensity = d * (1 - k) + l * k; // printed vinyl reads bright by day; lamps light it at night
     for (const m of lampMats) m.emissiveIntensity = 2.2 * k;
     for (const gs of glows) { gs.material.opacity = 0.85 * k; gs.visible = k > 0.01; }
+    for (const [m, a] of pools) { m.material.opacity = a * k; m.visible = k > 0.01; }
   });
 
   // a tap: the face showing runs its moves; with nothing to move it turns (or, with the drag, leans as a hint)
@@ -434,7 +466,7 @@ export function billboard(ctx, s) {
       ? [{ targets: tappable.map((bd) => bd.proxy), run() { for (const bd of tappable) tap(bd); }, hover: drag.hover }]
       : tappable.map((bd) => ({ targets: [bd.proxy], run() { tap(bd); }, hover(on) { bd.hover = on ? 1 : 0; pose(bd); } })),
     // the tab first: the piece's key button pulls it, as on every page with a tab; the boards' drag gets the second
-    drag: setTab ? [tab.drag, drag] : drag || (tab ? tab.drag : undefined),
+    drag: drag && tab ? [tab.drag, drag] : drag || (tab ? tab.drag : undefined),
     nudge: tab ? () => tab.nudge() : drag ? () => { if (loopsNow) for (const bd of playable) drag.peek(bd); } : undefined,
     actions: {
       turn(i = 0) { const bd = playable[i]; if (bd) start(bd, loopsNow); }, flip, pull(k = 1) { tab?.set(k); },
@@ -444,16 +476,12 @@ export function billboard(ctx, s) {
       loopsNow = loops;
       let busy = tab ? tab.tick(dt) : false;
       if (drag && drag.tick(dt)) busy = true;
-      if (tab && !setTab && !tab.pulling && !tabFree && tab.k < 0.01) tabFree = true;
-      // the set's tab drives the boards while it is pulled or nudged (k off where the piece put it)
-      const tabDrives = setTab && !drag.active && (tab.pulling || Math.abs(tab.k - tabAt) > 2e-3);
-      if (setTab && tab.pulling) tabAt = tab.k;
+      if (tab && !tab.pulling && !tabFree && tab.k < 0.01) tabFree = true;
       for (const bd of playable) {
         if (drag?.active) { /* the finger has it */ }
-        else if (tabDrives) {
-          // a pull turns the louvers with the tab; the nudge (the tab's hint wiggle) only leans the first few
-          const o = bd.base % 2 === 1, k = tab.pulling ? tab.k : tabAt + (tab.k - tabAt) * 0.4;
-          bd.p = Math.max(0, Math.min(0.999, o ? 1 - k : k)); bd.dir = o ? -1 : 1; bd.anim = null; busy = true;
+        else if (tab && (tab.pulling || (tabFree && !bd.anim && tab.k > 0))) {
+          // a pull turns the louvers with the tab; the nudge (its hint wiggle) only leans the first few
+          bd.dir = 1; bd.p = Math.min(0.999, tab.pulling ? tab.k : tab.k * 0.4); bd.anim = null; busy = true;
         }
         else if (bd.anim) {
           const dir = Math.sign(bd.anim.to - bd.p) || 1;
@@ -467,22 +495,16 @@ export function billboard(ctx, s) {
           bd.peek += dt / 1.2;
           if (bd.peek >= 1 || !loops) { bd.peek = -1; bd.p = 0; } else bd.p = PEEK * Math.sin(Math.PI * bd.peek) ** 2;
           bd.dir = 1; busy = true;
-        } else if (tab && !setTab && (tab.pulling || (tabFree && tab.k > 0))) { bd.dir = 1; bd.p = Math.min(0.999, tab.k); busy = true; }
-        else if (bd.p) { bd.p = 0; busy = true; }
+        } else if (bd.p) { bd.p = 0; busy = true; }
         // on its own: each beat sends a board to (its first face + beats), so boards that a tap or a pull put out of
         // step fall back into their pattern (two boards never show the same ad for long)
-        if (loops && s.every !== 0 && !bd.anim && !(tab && tab.pulling) && !drag?.active && !setTab && t >= bd.next) {
+        if (loops && s.every !== 0 && !bd.anim && !(tab && tab.pulling) && !drag?.active && t >= bd.next) {
           bd.beats++; bd.next = t + (s.every ?? 7);
           const steps = (((bd.start + bd.beats - bd.base) % bd.F) + bd.F) % bd.F;
           if (steps) { bd.dir = 1; bd.anim = { from: bd.p, to: 1, steps }; }
         }
         else if (t + (s.every ?? 7) * 2 < bd.next) bd.next = t + (s.every ?? 7); // the clock went back (a new page): keep the beat
         pose(bd);
-      }
-      // otherwise the tab follows the boards: out by as far as the set has turned toward its second face
-      if (setTab && !tabDrives) {
-        const bd = playable[0], k = odd() ? 1 - bd.p : bd.p;
-        if (Math.abs(k - tabAt) > 1e-4) { tab.set(tabAt = k); busy = true; }
       }
       for (const bd of boards) if (bd.moves.length && movesTick(bd, t, loops)) busy = true;
       return busy ? 'fast' : false;

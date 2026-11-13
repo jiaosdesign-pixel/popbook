@@ -1,7 +1,8 @@
 // Cursors drawn like the book: ink outline, paper fill, one accent (the site's blue), and a pale halo so they read
 // on a light and a dark page. SVG first; once rasterised, crisp 1x/2x PNGs via image-set().
-// Kinds: 'enter' (a page corner lifting: click opens the book), 'turnNext' / 'turnPrev' (the same sheet, for
-// the detail view's page corners; mirrored on the left), 'tap' (a fingertip, light touch),
+// Kinds: 'enter' (a small open book with a pop-up rising from its gutter: click opens the book; on the home page the
+// "Enter my world" sticker grows out of this exact drawing, home.js), 'turnNext' / 'turnPrev' (a page corner lifting,
+// for the detail view's page corners; mirrored on the left), 'tap' (a fingertip, light touch),
 // 'grab' (open hand), 'grabbing' (closed hand). Each has a plain CSS fallback.
 // Shared with the site (home/SYSTEM-NOTES.md on playground): the site's link cursor home/cursors/pointer.* is this
 // 'tap' drawing, byte for byte (hotspot 13 5); if 'tap' changes, re-run review/system/make-cursors.mjs there.
@@ -28,8 +29,12 @@ function figure(shapes, detail = '') {
 
 const palmOpen = { p: 'M8.6 16.2 C8.6 15 9.4 14.4 10.6 14.4 H22.2 C23.2 14.4 23.8 15.1 23.6 16.2 L22.4 24.6 C22 26.6 20.6 27.6 18.6 27.6 H13.4 C11.2 27.6 9.8 26.4 9.3 24.4 Z' };
 const SHAPES = {
-  // a page with its lower-right corner lifting (accent underside): "open / turn the page"
-  enter: figure([{ p: 'M5 3.6 H22 V16.6 L12.8 26.4 H5 Z' }],
+  // a small open book, its pop-up (accent) rising from the gutter: "enter the book". The sticker's doorway mark.
+  enter: figure([{ p: 'M3 14.2 L16 11.2 L29 14.2 V24.2 L16 21.2 L3 24.2 Z' }, { p: 'M10.6 10 L16 1.8 L21.4 10 Z' }],
+    `<path d="M16 11.4 V21" stroke="${INK}" stroke-width="1.5" stroke-linecap="round"/>`
+    + `<path d="M10.6 10 L16 1.8 L21.4 10 Z" fill="${ACCENT}" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/>`),
+  // a page with its lower-right corner lifting (accent underside): "turn the page"
+  turn: figure([{ p: 'M5 3.6 H22 V16.6 L12.8 26.4 H5 Z' }],
     `<path d="M22 16.6 L12.8 26.4 C12.9 21.8 13.9 19.6 15.4 18.6 C17 17.5 19 17 22 16.6 Z" fill="${ACCENT}" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/>`
     + `<path d="M8.4 8.6 H18.4 M8.4 12.4 H16.4" stroke="${INK}" stroke-opacity=".3" stroke-width="1.3" stroke-linecap="round"/>`),
   // pointing fingertip with two small touch marks
@@ -51,11 +56,11 @@ const SHAPES = {
   ], `<rect x="9.4" y="17.4" width="8.2" height="3.6" rx="1.8" fill="${PAPER}" stroke="${INK}" stroke-width="1.4"/>`),
 };
 // turning a page: the same page-corner sheet; mirrored for the left (prev) corner
-SHAPES.turnNext = SHAPES.enter;
-SHAPES.turnPrev = SHAPES.enter.replace(/(<svg[^>]*>)([\s\S]*)(<\/svg>)/, '$1<g transform="translate(32 0) scale(-1 1)">$2</g>$3');
-const HOT = Object.fromEntries(Object.entries({ enter: [5, 3.6], tap: [12.4, 2.8], grab: [16, 17], grabbing: [16, 18] }).map(([k, [x, y]]) => [k, [Math.round(OFF + K * x), Math.round(OFF + K * y)]]));
-HOT.turnNext = HOT.enter; HOT.turnPrev = [32 - HOT.enter[0], HOT.enter[1]];
-const FALLBACK = { enter: 'pointer', tap: 'pointer', grab: 'grab', grabbing: 'grabbing', turnNext: 'pointer', turnPrev: 'pointer' };
+SHAPES.turnNext = SHAPES.turn;
+SHAPES.turnPrev = SHAPES.turn.replace(/(<svg[^>]*>)([\s\S]*)(<\/svg>)/, '$1<g transform="translate(32 0) scale(-1 1)">$2</g>$3');
+const HOT = Object.fromEntries(Object.entries({ enter: [16, 13], turn: [5, 3.6], tap: [12.4, 2.8], grab: [16, 17], grabbing: [16, 18] }).map(([k, [x, y]]) => [k, [Math.round(OFF + K * x), Math.round(OFF + K * y)]]));
+HOT.turnNext = HOT.turn; HOT.turnPrev = [32 - HOT.turn[0], HOT.turn[1]];
+const FALLBACK = { enter: 'pointer', turn: 'pointer', tap: 'pointer', grab: 'grab', grabbing: 'grabbing', turnNext: 'pointer', turnPrev: 'pointer' };
 
 export const cursorSVG = (kind) => SHAPES[kind];
 export const cursorHotspot = (kind) => HOT[kind];

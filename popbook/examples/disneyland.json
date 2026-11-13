@@ -1,0 +1,434 @@
+{
+ "id": "disneyland",
+ "place": "Disneyland, Anaheim",
+ "date": "2026-10",
+ "view": "side-bound V-fold panorama down Main Street at night: a pastel fairy-tale castle at the end of the street with trees behind, pastel shop fronts outlined in bulbs either side, lamp posts, the figure in the street",
+ "caption": "",
+ "palette": {
+  "cover": "#D2C4A2",
+  "core": "#F4F1E8",
+  "stripes": [
+   "#375975",
+   "#DCC380",
+   "#365D45",
+   "#A44732",
+   "#B0BDC8",
+   "#EDEBE0"
+  ],
+  "lamp": "#FFD08A",
+  "ocean": "#4D6E89",
+  "field": "#CDBFA8",
+  "fieldDark": "#B4A58D",
+  "fieldLight": "#DED3BF",
+  "fieldPatch": "#C3B49B",
+  "tuft": "#B4A58D",
+  "path": "#B48E7E",
+  "stone": "#D9CFC0",
+  "hedge": "#5E7F55",
+  "grass": "#CDBFA8",
+  "trees": "#4E6B55",
+  "trim": "#FBF6EC",
+  "door": "#5A4440",
+  "glass": "#3E4458",
+  "castleWall": "#F2D4D0",
+  "castleStone": "#EFE5D5",
+  "castleRoof": "#7D9CCD",
+  "castleRoofAlt": "#A495CB",
+  "castleGold": "#D7B062",
+  "castleGlass": "#4B5472",
+  "castleDoor": "#8A6248",
+  "flag": "#D0534A",
+  "flagAlt": "#7895CF",
+  "lampPost": "#2F3A36",
+  "lampGlass": "#F3E6C4",
+  "sun": "#E3C98E",
+  "moon": "#F2EEDF",
+  "moonShadow": "#5D6779",
+  "figure": {
+   "coat": "#C9C3B5",
+   "coatBack": "#B3AD9F",
+   "scarf": "#3E5A73",
+   "legs": "#2E2E36",
+   "legsBack": "#24242B",
+   "shoes": "#1A1A1A",
+   "skin": "#E9C9AE",
+   "hair": "#1F1A17",
+   "cheek": "#E3A893",
+   "bow": "#D8363A",
+   "bowDot": "#FBF3EA",
+   "bag": "#1F1F22",
+   "bagLight": "#F1EEE4"
+  }
+ },
+ "book": {
+  "binding": "side",
+  "width": 1.5,
+  "depth": 1.05,
+  "nearPages": 4,
+  "farPages": 4,
+  "restAngle": 180,
+  "vTheta": 105,
+  "vGamma": 90
+ },
+ "ground": {
+  "preset": "filoli-side",
+  "path": 0.15,
+  "nightDim": 0.45
+ },
+ "camera": {
+  "yaw": 90,
+  "elevation": 22,
+  "fov": 30,
+  "frame": 0.8,
+  "lightYaw": -14
+ },
+ "light": {
+  "pool": 0.3,
+  "poolAt": [
+   -0.12,
+   0.34,
+   0
+  ],
+  "shadowRadius": 24,
+  "shadowIntensity": 0.42
+ },
+ "pieces": [
+  {
+   "id": "trees",
+   "kit": "vfold-wrap",
+   "role": "ground",
+   "inner": {
+    "kit": "estate",
+    "page": "far",
+    "width": 0.9,
+    "facadeH": 0.2,
+    "layers": [
+     {
+      "kind": "trees",
+      "u": 0.4,
+      "h": 0.22,
+      "x0": -0.95,
+      "x1": 0.95,
+      "color": "#4E6B55",
+      "seed": 3,
+      "spires": 0.2,
+      "dip": [
+       -0.74,
+       0.14,
+       0.4
+      ]
+     }
+    ]
+   },
+   "fold": [
+    {
+     "x0": 0.4,
+     "reach": [
+      0.96,
+      0.96
+     ],
+     "height": [
+      0.27,
+      0.27
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sky",
+   "label": "Sun and moon",
+   "kit": "sky-dial",
+   "role": "sky",
+   "on": "trees",
+   "x0": 0.4,
+   "center": [
+    -0.76,
+    0.2
+   ],
+   "r": 0.12
+  },
+  {
+   "id": "castle",
+   "label": "Castle",
+   "kit": "castle",
+   "role": "hero",
+   "x0": 0,
+   "depth": 0.09,
+   "tab": {
+    "page": "near",
+    "u": 0.62
+   },
+   "uplight": {
+    "color": "#8794F0",
+    "core": "#FFB89A",
+    "fall": 0.4,
+    "strength": 0.65,
+    "dim": 0.4
+   }
+  },
+  {
+   "id": "street",
+   "kit": "vfold-wrap",
+   "inner": [
+    {
+     "kit": "estate",
+     "page": "near",
+     "x": -0.43,
+     "width": 0.2,
+     "facadeH": 0.26,
+     "shop": true,
+     "bulbs": true,
+     "colors": {
+      "brick": "#BFD8C6",
+      "trim": "#FBF6EC",
+      "awning": "#C9554A"
+     },
+     "layers": [
+      {
+       "kind": "facade",
+       "u": 0.16,
+       "h": 0.26
+      }
+     ],
+     "wash": 0.5
+    },
+    {
+     "kit": "estate",
+     "page": "near",
+     "x": -0.64,
+     "width": 0.22,
+     "facadeH": 0.3,
+     "shop": true,
+     "bulbs": true,
+     "colors": {
+      "brick": "#EBC3C0",
+      "trim": "#FBF6EC",
+      "awning": "#5E8A6E"
+     },
+     "layers": [
+      {
+       "kind": "facade",
+       "u": 0.16,
+       "h": 0.3
+      }
+     ],
+     "wash": 0.5
+    },
+    {
+     "kit": "estate",
+     "page": "near",
+     "x": 0.43,
+     "width": 0.2,
+     "facadeH": 0.27,
+     "shop": true,
+     "bulbs": true,
+     "colors": {
+      "brick": "#EED9A4",
+      "trim": "#FBF6EC",
+      "awning": "#5F7FB8"
+     },
+     "layers": [
+      {
+       "kind": "facade",
+       "u": 0.16,
+       "h": 0.27
+      }
+     ],
+     "wash": 0.5
+    },
+    {
+     "kit": "estate",
+     "page": "near",
+     "x": 0.64,
+     "width": 0.22,
+     "facadeH": 0.31,
+     "shop": true,
+     "bulbs": true,
+     "colors": {
+      "brick": "#D8C8E2",
+      "trim": "#FBF6EC",
+      "awning": "#C9554A"
+     },
+     "layers": [
+      {
+       "kind": "facade",
+       "u": 0.16,
+       "h": 0.31
+      }
+     ],
+     "wash": 0.5
+    },
+    {
+     "kit": "estate",
+     "page": "near",
+     "x": -0.5,
+     "width": 0.22,
+     "facadeH": 0.28,
+     "shop": true,
+     "bulbs": true,
+     "colors": {
+      "brick": "#F0CDAE",
+      "trim": "#FBF6EC",
+      "awning": "#5F7FB8"
+     },
+     "layers": [
+      {
+       "kind": "facade",
+       "u": 0.46,
+       "h": 0.28
+      }
+     ],
+     "wash": 0.5
+    },
+    {
+     "kit": "estate",
+     "page": "near",
+     "x": -0.73,
+     "width": 0.24,
+     "facadeH": 0.32,
+     "shop": true,
+     "bulbs": true,
+     "colors": {
+      "brick": "#BCD0E2",
+      "trim": "#FBF6EC",
+      "awning": "#C9554A"
+     },
+     "layers": [
+      {
+       "kind": "facade",
+       "u": 0.46,
+       "h": 0.32
+      }
+     ],
+     "wash": 0.5
+    },
+    {
+     "kit": "estate",
+     "page": "near",
+     "x": 0.5,
+     "width": 0.22,
+     "facadeH": 0.29,
+     "shop": true,
+     "bulbs": true,
+     "colors": {
+      "brick": "#EBC3C0",
+      "trim": "#FBF6EC",
+      "awning": "#5E8A6E"
+     },
+     "layers": [
+      {
+       "kind": "facade",
+       "u": 0.46,
+       "h": 0.29
+      }
+     ],
+     "wash": 0.5
+    },
+    {
+     "kit": "estate",
+     "page": "near",
+     "x": 0.73,
+     "width": 0.24,
+     "facadeH": 0.33,
+     "shop": true,
+     "bulbs": true,
+     "colors": {
+      "brick": "#EED9A4",
+      "trim": "#FBF6EC",
+      "awning": "#C9554A"
+     },
+     "layers": [
+      {
+       "kind": "facade",
+       "u": 0.46,
+       "h": 0.33
+      }
+     ],
+     "wash": 0.5
+    }
+   ],
+   "fold": [
+    {
+     "x0": -0.16,
+     "reach": [
+      0.76,
+      0.76
+     ],
+     "height": [
+      0.32,
+      0.32
+     ]
+    },
+    {
+     "x0": -0.46,
+     "reach": [
+      0.86,
+      0.86
+     ],
+     "height": [
+      0.34,
+      0.34
+     ]
+    }
+   ]
+  },
+  {
+   "id": "lamps",
+   "kit": "vfold-wrap",
+   "inner": {
+    "kit": "trail-lamps",
+    "layers": [
+     {
+      "page": "near",
+      "x": -0.3,
+      "u": 0.32,
+      "h": 0.2
+     },
+     {
+      "page": "near",
+      "x": 0.3,
+      "u": 0.32,
+      "h": 0.2
+     }
+    ]
+   },
+   "fold": [
+    {
+     "x0": -0.32,
+     "reach": [
+      0.36,
+      0.36
+     ],
+     "height": [
+      0.27,
+      0.27
+     ]
+    }
+   ],
+   "pools": [
+    {
+     "x": -0.3,
+     "x0": -0.32
+    },
+    {
+     "x": 0.3,
+     "x0": -0.32
+    }
+   ]
+  },
+  {
+   "id": "me",
+   "kit": "layer-figure",
+   "on": "lamps",
+   "layer": 0,
+   "x": -0.13,
+   "height": 0.2,
+   "behind": 0.04
+  }
+ ],
+ "idle": [
+  "flags-flutter",
+  "me-wave",
+  "windows-glow"
+ ]
+}

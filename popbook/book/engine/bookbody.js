@@ -228,10 +228,17 @@ export function buildBook(spec, prints) {
       if (spec.author) g.fillText(String(spec.author).toUpperCase(), cx + acap * 0.3, c.height - (spec.authorY ?? 0.17) * PXU);
       tex.needsUpdate = true;
     };
-    // letterspaced serif caps; Memoir (the site's display face) takes over once its file is in home/fonts/fonts.css
+    // letterspaced serif caps in Memoir (the site's display face, home/fonts/fonts.css). The title waits for it instead of
+    // printing in Georgia and swapping (a visible flash): already loaded, or no Memoir on the page (fonts.check is true
+    // with nothing to load), it prints at once; else when it lands, with Georgia only if it takes over 3 s or fails.
     const MEMOIR = '"Memoir", Georgia, serif', SERIF = 'Georgia, "Times New Roman", serif', MONO = '"Martian Mono", ui-monospace, monospace';
-    draw(SERIF, MONO);
-    if (document.fonts?.load) document.fonts.load('400 32px "Memoir"').then((f) => { if (f.length) draw(MEMOIR, MONO); }).catch(() => {});
+    let printed = false;
+    const print = (f) => { if (printed && f !== MEMOIR) return; draw(f, MONO); printed = true; };
+    if (!document.fonts?.load || document.fonts.check('400 32px "Memoir"')) print(MEMOIR);
+    else {
+      document.fonts.load('400 32px "Memoir"').then((f) => print(f.length ? MEMOIR : SERIF)).catch(() => print(SERIF));
+      setTimeout(() => { if (!printed) print(SERIF); }, 3000);
+    }
     const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#3A2A17'), map: tex, transparent: true, roughness: 0.45, metalness: 0.35, depthWrite: false, emissive: new THREE.Color('#F4DDA6'), emissiveMap: tex, emissiveIntensity: 0 });
     mat.polygonOffset = true; mat.polygonOffsetFactor = -4;
     const geo = new THREE.PlaneGeometry(across, along);

@@ -6,7 +6,7 @@ Popbook is a skill for AI agents. You send your agent a photo from your day (or 
 
 I built it for my own site, where the book holds one moment from my week. This is the same engine, packaged for you.
 
-![Four Popbook pages: the Golden Gate Bridge by day, a bay trail by night, a café by night, a Halloween garden by day](docs/pages.jpg)
+![Two Popbook pages, each by day and by night: the Golden Gate Bridge, and a fairy-tale castle at the end of a main street](docs/pages.jpg)
 
 ## Install
 
@@ -38,7 +38,7 @@ Your agent reads the photo, picks pieces from the kit, folds them into a spread,
 |---|---|
 | `popbook/SKILL.md` | the instructions your agent follows |
 | `popbook/references/kit.md` | every paper piece, its parameters, and the fold-flat rules |
-| `popbook/examples/` | four scenes from my book, with my words and dates taken out, as worked examples |
+| `popbook/examples/` | five scenes from my book, with my words and dates taken out, as worked examples |
 | `popbook/scripts/` | `new.mjs` starts a page, `build.mjs` makes the one HTML file, `check.mjs` tests it in a headless browser, `photo.py` reads a photo's date and colours |
 | `popbook/book/` | the pop-up engine (three.js) |
 | `popbook/vendor/`, `popbook/fonts/` | three.js and the two typefaces, with their licences |

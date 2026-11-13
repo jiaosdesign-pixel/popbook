@@ -484,7 +484,7 @@ export function deckFigure(ctx, s) {
   holder.add(spacer);
   const side = (s.x ?? -0.16) < 0 ? 'left' : 'right';
   const targets = []; holder.traverse((m) => { if (m.isMesh) targets.push(m); });
-  return { parts: [halfPart(holder, host.mount.frames, side)], targets };
+  return { parts: [halfPart(holder, host.mount.frames, side)], targets, waver: { obj: fig.fore, base: s.wave ?? 0.12 } };
 }
 
 // ---------------------------------------------------------------- fog lever (pull-tab linkage)

@@ -322,7 +322,7 @@ export async function mountBook(container, opts = {}) {
     const side = bookSpec.binding === 'side';
     const corners = makeCorners(book, prints, bookSpec, { layout: side ? 'side' : 'top' });
     group.add(corners.group);
-    const lamps = [], parts = [], dynamics = [], tickers = [], dialTicks = [], lightables = [], drags = [], pokes = [], dials = [], nudges = [], proxies = [];
+    const lamps = [], parts = [], dynamics = [], tickers = [], wavers = [], dialTicks = [], lightables = [], drags = [], pokes = [], dials = [], nudges = [], proxies = [];
     const ctx = { palette: pal, scene: group, lamp: (fn) => lamps.push(fn), pieces: {}, moonPhase: moonPhase(resolveTime('auto', o.date)), book: bookSpec, sky: skyHooks };
     if (g.nightDim) { // opt-in: a pale ground printed for day darkens with the lamps at night (day untouched)
       const gm = new Set(); group.traverse((x) => { for (const mt of [].concat(x.material || [])) if (mt.map && (mt.map === prints.near || mt.map === prints.far)) gm.add(mt); });
@@ -348,6 +348,7 @@ export async function mountBook(container, opts = {}) {
       if (built.dial) dials.push(built.dial);
       if (built.nudge) built.dial ? nudges.unshift(built.nudge) : nudges.push(built.nudge); // the sky dial's peek goes first: it is the piece readers miss
       for (const px of built.proxies || []) proxies.push(px);
+      if (built.waver) wavers.push(built.waver); // { obj, base }: a forearm on a brad the home page can wave (greet)
     }
     const tapTargets = new Set();
     if (m.tap) for (const id of [].concat(m.tap.on)) for (const x of (ctx.pieces[id]?.targets || [])) tapTargets.add(x);
@@ -372,7 +373,7 @@ export async function mountBook(container, opts = {}) {
     const tableY = book.bottom - 0.002; // the table touches the cover (the float lifts the book off it)
     shadowPlane.position.y = tableY;
     return {
-      m, pal, group, book, bookSpec, prints, corners, parts, dynamics, tickers, dialTicks, lightables, lamps, drags, dragOf, pokeOf, hoverOf, tapTargets, pickables, dials, side,
+      m, pal, group, book, bookSpec, prints, corners, parts, dynamics, tickers, wavers, dialTicks, lightables, lamps, drags, dragOf, pokeOf, hoverOf, tapTargets, pickables, dials, side,
       nudges, proxies, nudgePlan: null, nudgeRounds: 0, LD, LN, pool: lt0.pool ?? 1, poolAt: lt0.poolAt || [-0.05, 0.4, 0.26],
       shadowSoft: side ? { radius: lt0.shadowRadius ?? 14, intensity: lt0.shadowIntensity ?? 0.6, half: 1.35 } : { radius: 6, intensity: 1, half: 1.75 },
       lightYaw: (side ? (m.camera?.lightYaw ?? -14) : (m.camera?.yaw ?? -14)) * deg,
@@ -865,6 +866,10 @@ export async function mountBook(container, opts = {}) {
   const cornerUsable = (dir) => cornersOn() && cornerAllow[dir];
   function setZone(z) { if (z !== zone) { zone = z; o.onHoverChange?.(z); } }
   let lastTouch = performance.now();
+  // home only: greet (the host page asks: her forearm waves while the hint bubble shows), the ribbon's tug (an idle nudge
+  // every few seconds until the visitor first points at the book) and hover's lift (the camera comes in a little, the near
+  // page's corner curls). greetK, curlK and tugT ease or count in the frame loop.
+  let greet = false, greetK = 0, everHovered = false, tugNext = 4, tugT = -1;
   let hoverK = 0, hovering = false, dragging = null, settleUntil = 0, down = null, suppressClick = false, lastPick = 0, curKind = null;
   const ray = new THREE.Raycaster();
   const ndc = (e) => { const r = canvas.getBoundingClientRect(); return new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); };
@@ -1188,11 +1193,13 @@ export async function mountBook(container, opts = {}) {
     // page corners: ease each toward its target curl
     let cornerBusy = false;
     if (!F) {
-      const showC = cornersOn() && isOpen();
+      const homeCurl = mode === 'home' && motion && isOpen();
+      const curlDir = 'next'; // the reader's right-hand corner, the one a thumb lifts to turn on
+      const showC = (cornersOn() || homeCurl) && isOpen();
       W.corners.group.visible = showC;
       for (const dir of ['prev', 'next']) {
         const S = W.corners.sides[dir];
-        const target = !showC || !cornerUsable(dir) ? 0 : press?.dir === dir ? pressK : hoverCorner === dir ? 0.52 : now < turnHold[dir] ? 0.35 : 0;
+        const target = !showC ? 0 : homeCurl ? (dir === curlDir ? 0.42 * hoverK : 0) : !cornerUsable(dir) ? 0 : press?.dir === dir ? pressK : hoverCorner === dir ? 0.52 : now < turnHold[dir] ? 0.35 : 0;
         const next = motion ? S.k + (target - S.k) * Math.min(1, dt * 9) : target;
         if (S.set(Math.abs(next - target) < 0.002 ? target : next)) { wantShadow(2); cornerBusy = true; }
       }
@@ -1221,8 +1228,22 @@ export async function mountBook(container, opts = {}) {
     hoverK += ((hovering && !dragging ? 1 : 0) - hoverK) * Math.min(1, dt * 4);
     tilt.x += (tilt.tx - tilt.x) * Math.min(1, dt * 3);
     tilt.y += (tilt.ty - tilt.y) * Math.min(1, dt * 3);
-    // the hint: the ribbon tail sways a little, more when the pointer is over the book (home), which also leans in
-    if (motion) for (const w of F ? [F.from, F.to] : [W]) if (w.book.ribbon) w.book.ribbon.rotation.y = (md.sway + md.swayHover * hoverK) * Math.sin(ft * 1.1);
+    // the hint: the ribbon tail sways a little, more when the pointer is over the book (home), which also leans in.
+    // At home, until the visitor first points at the book, the ribbon gives a short tug every 8 s (a damped swing, 1.5 s).
+    if (hovering) everHovered = true;
+    let tug = 0;
+    if (motion && opened && mode === 'home' && !everHovered && !F) {
+      if (tugT < 0 && ft >= tugNext) { tugT = 0; tugNext = ft + 8; }
+      if (tugT >= 0) { tugT += dt; tug = 0.32 * Math.exp(-3 * tugT) * Math.sin(13 * tugT); if (tugT > 1.5) tugT = -1; }
+    } else tugT = -1;
+    if (motion) for (const w of F ? [F.from, F.to] : [W]) if (w.book.ribbon) w.book.ribbon.rotation.y = (md.sway + md.swayHover * hoverK) * Math.sin(ft * 1.1) + tug;
+    // greet: her forearm swings from its rest angle while the host page shows its hint bubble
+    greetK += ((greet && motion && mode === 'home' && !F ? 1 : 0) - greetK) * Math.min(1, dt * 6);
+    if (!F && W.wavers.length && (greetK > 0.001 || W.waving)) {
+      for (const wv of W.wavers) wv.obj.rotation.z = wv.base + greetK * 0.42 * Math.sin(ft * 9);
+      W.waving = greetK > 0.001; if (!W.waving) for (const wv of W.wavers) wv.obj.rotation.z = wv.base;
+      wantShadow(2);
+    }
     const up = phi < W.REST ? Math.max(0, Math.sin(Math.PI - phi)) : 0;
     let base = W.fit.base, upFit = W.fit.up, el = W.el;
     camTarget.copy(base.target).lerp(upFit.target, up);
@@ -1238,6 +1259,7 @@ export async function mountBook(container, opts = {}) {
       el += (F.to.el - el) * turnK;
     }
     const lean = 1 + md.lean * hoverK;
+    if (mode === 'home' && motion) dist *= 1 - 0.035 * hoverK; // lift: the book comes up toward the reader a little
     placeCamera(camTarget, dist, el, motion ? -tilt.x * 0.07 * lean * md.tilt : 0, motion ? -tilt.y * 0.035 * lean * md.tilt : 0, bob);
     // table shadow: the book floats a few mm above it, so it widens and softens with the float
     const sp = W.shadowPlane, liftK = (md.bob + bob) / (2 * Math.max(1e-6, md.bob));
@@ -1249,7 +1271,7 @@ export async function mountBook(container, opts = {}) {
     sp.scale.set(k, k * (Dd + e) / (2 * Dd), 1);
     sp.position.z = (Dd - e) / 2;
     const settling = Math.abs(tilt.tx - tilt.x) + Math.abs(tilt.ty - tilt.y) > 0.002 || Math.abs((hovering ? 1 : 0) - hoverK) > 0.01;
-    const more = visible && (busy || settling || cornerBusy || (motion && opened) || handling || !!press);
+    const more = visible && (busy || settling || cornerBusy || tugT >= 0 || greetK > 0.001 || (motion && opened) || handling || !!press);
     if (shadowDirty) {
       const every = shadowDirty >= 3 ? 1 : shadowDirty === 2 ? 2 : 8;
       if (frameN % every === 0 || !more) { renderer.shadowMap.needsUpdate = true; shadowDirty = 0; shadowN++; }
@@ -1350,6 +1372,10 @@ export async function mountBook(container, opts = {}) {
     },
     get mode() { return mode; },
     // Which page corners may turn (the page disables 'prev' on the first moment, 'next' on the last).
+    // home: wave hello (her forearm, where the page has a waving figure) while the host shows its hint; standing() says
+    // whether the page stands open (the host waits for it before its one-time hint, so she can wave as it shows)
+    greet(on) { greet = !!on; kick(); return W.wavers.length > 0; },
+    standing() { return !!W && !F && isOpen(); },
     setCorners(c = {}) { if ('prev' in c) cornerAllow.prev = !!c.prev; if ('next' in c) cornerAllow.next = !!c.next; kick(); return { ...cornerAllow }; },
     get corners() { return { enabled: cornersOn(), ...cornerAllow }; },
     // The words live in the page: the moment's text for a detail view.
